@@ -11,13 +11,13 @@
 		<h1>Kazimazi's Dark and Darker simulator</h1>
 
 		<h2>Enemy</h2>
-    
-    <label for="enemy">Choose a preset:</label>
 
-    <select id="enemy-preset" autocomplete="off">
-      <option value="demon">Demon</option>
-      <option value="ranger">Ranger</option>
-    </select>
+		<label for="enemy">Choose a preset:</label>
+
+		<select id="enemy-preset" autocomplete="off">
+			<option value="demon">Demon</option>
+			<option value="ranger">Ranger</option>
+		</select>
 
 		<div>Health: <span id="health"></span></div>
 		<div>Max Health: <span id="max-health"></span></div>
@@ -35,22 +35,22 @@
 		<div>True Magic Damage: <span id="true-magic-damage"></span></div>
 		<div>Infernal Usery: <span id="infernal-usery"></span></div>
 
-    <br/>
+		<br>
 
 		<div>
 			<button id="attack">Attack</button>
 		</div>
 
-    <br/>
+		<br>
 
 		<div id="health-bar-border">
 			<div id="health-bar"></div>
 			<div id="health-bar-text">
 				health: <span id="current-health"></span>
-				/ <span id="max-health"></span>
+				/ <span id="bar-max-health"></span>
 			</div>
 		</div>
-    <div>Time: <span id="time">Paused</span></div>
+		<div>Time: <span id="time">Paused</span></div>
 		<script type="module" src="./dist/app.js"></script>
 	</body>
 </html>

@@ -77,7 +77,6 @@ const attacker: Attacker = {
 
 // Elements under enemy header.
 let enemyPresetElement = document.getElementById('enemy-preset') as HTMLSelectElement
-let healthElement = document.getElementById('health')
 let magicalDamageReductionElement = document.getElementById('magical-damage-reduction')
 let antimagicElement = document.getElementById('antimagic')
 let perseveranceElement = document.getElementById('perseverance')
@@ -93,7 +92,7 @@ let infernalUseryElement = document.getElementById('infernal-usery')
 
 // Elements around health bar.
 let currentHealthElement = document.getElementById('current-health')
-let maxHealthElement = document.getElementById('max-health')
+let barMaxHealthElement = document.getElementById('bar-max-health')
 let healthBarContainerElement = document.getElementById('health-bar-border')
 let healthBarElement = document.getElementById('health-bar')
 let timeElement = document.getElementById('time')
@@ -101,9 +100,8 @@ let timeElement = document.getElementById('time')
 if (
   !(
     enemyPresetElement
-    && healthElement
     && currentHealthElement
-    && maxHealthElement
+    && barMaxHealthElement
     && magicalDamageReductionElement
     && antimagicElement
     && perseveranceElement
@@ -148,8 +146,7 @@ const changeHealth = (d: number) => {
  */
 const update = () => {
   updateHealth()
-  maxHealthElement.innerText = enemy.maxHealth.toString()
-  healthElement.innerText = enemy.maxHealth.toString()
+  barMaxHealthElement.innerText = enemy.maxHealth.toString()
   magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
   antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
   perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
