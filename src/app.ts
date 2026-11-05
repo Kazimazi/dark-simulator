@@ -137,10 +137,49 @@ if (
   throw Error("Something went wrong")
 }
 
-const updateHealth = (isDead = false) => {
-  currentHealthElement.innerText = Math.ceil(enemy.health).toString()
-  let newWidth: number = enemy.health / enemy.maxHealth * 100
-  healthBarElement.style.setProperty('width', newWidth + "%")
+const ui = {
+  updateHealth: (isDead = false) => {
+    currentHealthElement.innerText = Math.ceil(enemy.health).toString()
+    let newWidth: number = enemy.health / enemy.maxHealth * 100
+    healthBarElement.style.setProperty('width', newWidth + "%")
+  },
+  /**
+   * Updates all changing UI elements.
+   */
+  update: () => {
+    ui.updateHealth()
+    barMaxHealthElement.innerText = enemy.maxHealth.toString()
+    magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
+    antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
+    perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
+    debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
+    oneManBandInputElement.checked = enemy.oneManBand.active == true
+    oneManBandMagicalHealingInputElement.value =
+      enemy.oneManBand.magicalHealing !== undefined
+        ? enemy.oneManBand.magicalHealing.toString()
+        : ""
+
+    magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
+    magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
+    magicPenetrationElement.innerText = (attacker.magicPenetration * 100).toString() + '%'
+    additionalMagicDamageElement.innerText = attacker.additionalMagicDamage.toString()
+    trueMagicDamageElement.innerText = attacker.trueMagicDamage.toString()
+    infernalUseryElement.innerText = attacker.infernalUsery ? "ON" : "OFF"
+  },
+  pauseTime: () => {
+    timeElement.innerText = "Paused"
+  },
+  continueTime: () => {
+    timeElement.innerText = "Going"
+  },
+  /**
+   * Stops time if target is clear of dots.
+   */
+  maybePauseTime: () => {
+    if (!enemy.curseOfPain.active && !enemy.curseOfSacrifice.active) {
+      ui.pauseTime()
+    }
+  },
 }
 
 /**
@@ -151,40 +190,12 @@ const changeHealth = (d: number, source: string) => {
   console.log(`Change health: ${source} ${d}`)
   if (newHealth > 0) {
     enemy.health = newHealth
-    updateHealth()
+    ui.updateHealth()
   } else {
     enemy.health = 0
     clearTimeout(enemy.oneManBand.intervalId)
-    updateHealth(true)
+    ui.updateHealth(true)
   }
-}
-
-/**
- * Updates all changing UI elements.
- */
-const update = () => {
-  updateHealth()
-  barMaxHealthElement.innerText = enemy.maxHealth.toString()
-  magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
-  antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
-  perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
-  debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
-  oneManBandInputElement.checked = enemy.oneManBand.active == true
-  oneManBandMagicalHealingInputElement.value =
-    enemy.oneManBand.magicalHealing !== undefined
-      ? enemy.oneManBand.magicalHealing.toString()
-      : ""
-
-  magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
-  magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
-  magicPenetrationElement.innerText = (attacker.magicPenetration * 100).toString() + '%'
-  additionalMagicDamageElement.innerText = attacker.additionalMagicDamage.toString()
-  trueMagicDamageElement.innerText = attacker.trueMagicDamage.toString()
-  infernalUseryElement.innerText = attacker.infernalUsery ? "ON" : "OFF"
-}
-
-const pauseTime = () => {
-  timeElement.innerText = "Paused"
 }
 
 enemyPresetElement.addEventListener('change', function() {
@@ -195,7 +206,7 @@ enemyPresetElement.addEventListener('change', function() {
   clearTimeout(enemy.demon?.intervalId)
   clearTimeout(enemy.oneManBand.intervalId)
 
-  pauseTime()
+  ui.pauseTime()
 
   if (this.value == "demon") {
     enemy = structuredClone(demon)
@@ -203,7 +214,7 @@ enemyPresetElement.addEventListener('change', function() {
     enemy = structuredClone(ranger)
   }
 
-  update()
+  ui.update()
 })
 
 function initOneManBand() {
@@ -252,17 +263,8 @@ const curseOfPainDamage = () => {
     + attacker.trueMagicDamage
 }
 
-/**
- * Stops time if target is clear of dots.
- */
-const maybePauseTime = () => {
-  if (!enemy.curseOfPain.active && !enemy.curseOfSacrifice.active) {
-    pauseTime()
-  }
-}
-
 const applyDot = () => {
-  timeElement.innerText = "Going"
+  ui.continueTime()
   enemy.curseOfPain.intervalId = setInterval(() => {
     const tickDamage = curseOfPainDamage() * 0.5 / CURSE_OF_PAIN_DURATION
     const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
@@ -271,7 +273,7 @@ const applyDot = () => {
 
   enemy.curseOfPain.timeoutId = setTimeout(() => {
     enemy.curseOfPain.active = false
-    maybePauseTime()
+    ui.maybePauseTime()
     clearInterval(enemy.curseOfPain.intervalId)
     enemy.curseOfPain.intervalId = undefined
   }, (CURSE_OF_PAIN_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000) // Base duration + 1 because the first tick doesn't happen immediately.
@@ -302,7 +304,7 @@ const curseOfSacrifice = () => {
     enemy.curseOfSacrifice.active = true
   }
 
-  timeElement.innerText = "Going"
+  ui.continueTime()
   enemy.curseOfSacrifice.intervalId = setInterval(() => {
     let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
     magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
@@ -315,7 +317,7 @@ const curseOfSacrifice = () => {
 
   enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
     enemy.curseOfSacrifice.active = false
-    maybePauseTime()
+    ui.maybePauseTime()
     clearInterval(enemy.curseOfSacrifice.intervalId)
     enemy.curseOfSacrifice.intervalId = undefined
   }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
@@ -342,7 +344,7 @@ if (enemy.demon?.active) {
 initOneManBand()
 
 // Init UI values.
-update()
+ui.update()
 
 const attackButton = document.getElementById('attack') as HTMLButtonElement
 attackButton.onclick = () => attack(() => {
