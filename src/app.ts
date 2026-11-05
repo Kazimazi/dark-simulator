@@ -44,7 +44,6 @@ type Enemy = {
   },
 }
 
-
 const PRESET = {
   /**
    * A normal demon player, with all the unfair things he could get.
@@ -80,6 +79,12 @@ const PRESET = {
 }
 
 let enemy: Enemy = structuredClone(PRESET.DEMON)
+
+let dotted = () => enemy.curseOfPain.active || enemy.curseOfSacrifice.active
+/**
+ * Time either flows or not. It flows, while enemy has active dot.
+ */
+let timeFlow = dotted
 
 /**
  * An attacker in full all stat rare gear, ready to ruin normal lobbies.
@@ -327,7 +332,7 @@ const ui = {
    * Pauses time if target is clear of dots.
    */
   maybePauseTime: () => {
-    if (!enemy.curseOfPain.active && !enemy.curseOfSacrifice.active) {
+    if (timeFlow()) {
       ui.pauseTime()
     }
   },
@@ -388,7 +393,7 @@ function initDemon() {
     const tickDamage = enemy.maxHealth * 0.01 // 1% of health
 
     enemy.demon.intervalId = setInterval(() => {
-      if (enemy.curseOfPain.active) {
+      if (timeFlow()) {
         changeHealth(-tickDamage, "Demon degen")
       }
     }, 1000)
@@ -400,7 +405,7 @@ function initOneManBand() {
     // Only change health, while One-Man Band is still active.
     if (enemy.oneManBand.active) {
       const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
-      if (enemy.curseOfPain.active || enemy.curseOfSacrifice.active) {
+      if (timeFlow()) {
         changeHealth(tickHeal, "One-Man Band")
       }
     }
