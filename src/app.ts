@@ -1,5 +1,7 @@
 const CURSE_OF_PAIN_DURATION = 8 // Seconds.
 const CURSE_OF_PAIN_BASE_DAMAGE = 15
+const CURSE_OF_SACRIFICE_DURATION = 12 // Seconds.
+const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3
 const ONE_MAN_BAND_HEAL_COEFFICIENT = .2 // Perfect song coefficient.
 
 type Attacker = {
@@ -15,6 +17,11 @@ type Enemy = {
   health: number,
   maxHealth: number,
   curseOfPain: {
+    active: boolean,
+    intervalId?: number | undefined,
+    timeoutId?: number | undefined,
+  },
+  curseOfSacrifice: {
     active: boolean,
     intervalId?: number | undefined,
     timeoutId?: number | undefined,
@@ -41,6 +48,7 @@ const demon: Enemy = {
   health: 200,
   maxHealth: 200,
   curseOfPain: { active: false },
+  curseOfSacrifice: { active: false },
   magicDamageReduction: .5, // 50% very normal for a demon in all stat gear.
   antimagic: true, // This is basic to have.
   perseverance: false,
@@ -54,6 +62,7 @@ const ranger: Enemy = {
   health: 110,
   maxHealth: 110,
   curseOfPain: { active: false },
+  curseOfSacrifice: { active: false },
   magicDamageReduction: .1, // 50% very normal for a demon in all stat gear.
   antimagic: false,
   perseverance: false,
@@ -91,6 +100,7 @@ let trueMagicDamageElement = document.getElementById('true-magic-damage')
 let infernalUseryElement = document.getElementById('infernal-usery')
 
 // Elements around health bar.
+let attackTypeSelectElement = document.getElementById('attack-type') as HTMLSelectElement
 let currentHealthElement = document.getElementById('current-health')
 let barMaxHealthElement = document.getElementById('bar-max-health')
 let healthBarContainerElement = document.getElementById('health-bar-border')
@@ -100,6 +110,7 @@ let timeElement = document.getElementById('time')
 if (
   !(
     enemyPresetElement
+    && attackTypeSelectElement
     && currentHealthElement
     && barMaxHealthElement
     && magicalDamageReductionElement
@@ -218,6 +229,31 @@ const curseOfPain = () => {
   applyDot()
 }
 
+const curseOfSacrifice = () => {
+  // TODO: Should increase health by a flat amount (15 str + 15 vigor).
+  if (enemy.curseOfSacrifice.active) {
+    clearInterval(enemy.curseOfSacrifice.intervalId)
+    clearTimeout(enemy.curseOfSacrifice.timeoutId)
+  }
+
+  timeElement.innerText = "Going"
+  enemy.curseOfPain.intervalId = setInterval(() => {
+    let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
+    magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
+
+    const tickDamage = CURSE_OF_SACRIFICE_BASE_DAMAGE * magicDamageReduction
+    const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
+    changeHealth(-finalTickDamage)
+  }, 1000)
+
+  enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
+    enemy.curseOfSacrifice.active = false
+    timeElement.innerText = "Paused"
+    clearInterval(enemy.curseOfSacrifice.intervalId)
+    enemy.curseOfSacrifice.intervalId = undefined
+  }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
+}
+
 /**
  * `Attacker` curses the `Enemy` and causes instant and periodic damage for 5 seconds. 
  */
@@ -250,4 +286,10 @@ if (enemy.oneManBand) {
 update()
 
 const attackButton = document.getElementById('attack') as HTMLButtonElement
-attackButton.onclick = () => attack(curseOfPain)
+attackButton.onclick = () => attack(() => {
+  if (attackTypeSelectElement.value == "curse-of-pain") {
+    return curseOfPain()
+  } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
+    return curseOfSacrifice()
+  }
+})
