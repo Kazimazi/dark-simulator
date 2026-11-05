@@ -3,6 +3,8 @@ const CURSE_OF_PAIN_BASE_DAMAGE = 15
 const CURSE_OF_SACRIFICE_DURATION = 12 // Seconds.
 const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3
 const ONE_MAN_BAND_HEAL_COEFFICIENT = .2 // Perfect song coefficient.
+const INFERNAL_USERY_DAMAGE = 2 // True damage.
+const PERSEVERANCE_DAMAGE_REDUCTION = 3
 
 type Attacker = {
   magicalBaseDamage: number,
@@ -28,7 +30,7 @@ type Enemy = {
   },
   magicDamageReduction: number,
   antimagic: boolean,
-  perseverance: boolean, // TODO: implement
+  perseverance: boolean,
   curseOfWeakness: boolean,
   debuffDurationReduction: number,
   demon?: {
@@ -184,7 +186,7 @@ const ui = {
     timeElement.innerText = "Going"
   },
   /**
-   * Stops time if target is clear of dots.
+   * Pauses time if target is clear of dots.
    */
   maybePauseTime: () => {
     if (!enemy.curseOfPain.active && !enemy.curseOfSacrifice.active) {
@@ -209,6 +211,12 @@ const changeHealth = (d: number, source: string) => {
   }
 }
 
+function init() {
+  initDemon()
+  initOneManBand()
+  ui.update()
+}
+
 enemyPresetElement.addEventListener('change', function() {
   clearInterval(enemy.curseOfPain.intervalId)
   clearTimeout(enemy.curseOfPain.timeoutId)
@@ -225,7 +233,7 @@ enemyPresetElement.addEventListener('change', function() {
     enemy = structuredClone(PRESET.RANGER)
   }
 
-  ui.update()
+  init()
 })
 
 antimagicInputElement.addEventListener('change', function() {
@@ -235,6 +243,19 @@ antimagicInputElement.addEventListener('change', function() {
 perseveranceInputElement.addEventListener('change', function() {
   enemy.perseverance = this.checked
 })
+
+function initDemon() {
+  // TODO: Demon ticks are happening even while time is stopped. Damage is not taken, but gets desynced.
+  if (enemy.demon?.active) {
+    const tickDamage = enemy.maxHealth * 0.01 // 1% of health
+
+    enemy.demon.intervalId = setInterval(() => {
+      if (enemy.curseOfPain.active) {
+        changeHealth(-tickDamage, "Demon degen")
+      }
+    }, 1000)
+  }
+}
 
 function initOneManBand() {
   enemy.oneManBand.intervalId = setInterval(() => {
@@ -278,20 +299,47 @@ infernalUseryInputElement.addEventListener('change', function() {
 const curseOfPainDamage = () => {
   let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
   magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
-  return (
-    (CURSE_OF_PAIN_BASE_DAMAGE + attacker.magicalBaseDamage)
-    * (1 + attacker.magicPowerBonus)
-    + attacker.additionalMagicDamage
-  ) * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration))
-    + attacker.trueMagicDamage
+  return {
+    magic: (
+      (CURSE_OF_PAIN_BASE_DAMAGE + attacker.magicalBaseDamage)
+      * (1 + attacker.magicPowerBonus)
+      + attacker.additionalMagicDamage
+    ) * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration)),
+    true: attacker.trueMagicDamage,
+  }
 }
 
 const applyDot = () => {
   ui.continueTime()
   enemy.curseOfPain.intervalId = setInterval(() => {
-    const tickDamage = curseOfPainDamage() * 0.5 / CURSE_OF_PAIN_DURATION
-    const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
-    changeHealth(-finalTickDamage, "Curse of Pain tick")
+    const { magic: magicDamage, true: trueDamage } = curseOfPainDamage()
+    const magicTickDamage = magicDamage * 0.5 / CURSE_OF_PAIN_DURATION
+    const trueTickDamage = trueDamage * 0.5 / CURSE_OF_PAIN_DURATION
+
+    let tickDamage: number = 0
+
+    // Handle magic damage.
+    if (enemy.perseverance) {
+      tickDamage += Math.max(magicTickDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+    } else {
+      tickDamage += magicTickDamage
+    }
+
+    // Handle true damage.
+    if (attacker.infernalUsery) {
+      if (enemy.perseverance) {
+        tickDamage += Math.max(trueTickDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
+      } else {
+        tickDamage += trueTickDamage + INFERNAL_USERY_DAMAGE
+      }
+    } else {
+      if (enemy.perseverance) {
+        tickDamage += Math.max(trueTickDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+      } else {
+        tickDamage += trueTickDamage
+      }
+    }
+    changeHealth(-tickDamage, "Curse of Pain tick")
   }, 1000)
 
   enemy.curseOfPain.timeoutId = setTimeout(() => {
@@ -306,9 +354,32 @@ const curseOfPain = () => {
   if (!enemy.curseOfPain.active) {
     enemy.curseOfPain.active = true
 
-    const damage = curseOfPainDamage()
-    const finalDamage = attacker.infernalUsery ? damage + 2 : damage
-    changeHealth(-finalDamage, "Curse of Pain")
+    const { magic: magicDamage, true: trueDamage } = curseOfPainDamage()
+    let damage: number = 0
+
+    // Handle magic damage.
+    if (enemy.perseverance) {
+      damage += Math.max(magicDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+    } else {
+      damage += magicDamage
+    }
+
+    // Handle true damage.
+    if (attacker.infernalUsery) {
+      if (enemy.perseverance) {
+        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
+      } else {
+        damage += trueDamage + INFERNAL_USERY_DAMAGE
+      }
+    } else {
+      if (enemy.perseverance) {
+        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+      } else {
+        damage += trueDamage
+      }
+    }
+
+    changeHealth(-damage, "Curse of Pain")
   } else {
     // Clear previous curse.
     clearInterval(enemy.curseOfPain.intervalId)
@@ -333,9 +404,23 @@ const curseOfSacrifice = () => {
     magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
 
     // Think it only does a flat amount of damage, no scaling, to added/true magic.
-    const tickDamage = CURSE_OF_SACRIFICE_BASE_DAMAGE * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration))
-    const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
-    changeHealth(-finalTickDamage, "Curse of Sacrifice tick")
+    let damage: number = 0
+
+    damage = CURSE_OF_SACRIFICE_BASE_DAMAGE * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration))
+
+    if (attacker.infernalUsery) {
+      if (enemy.perseverance) {
+        damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1) + 1 // + 1 at the end is infernal usery after perseverance.
+      } else {
+        damage += 2
+      }
+    } else {
+      if (enemy.perseverance) {
+        damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1) // + 1 at the end is infernal usery after perseverance.
+      }
+    }
+
+    changeHealth(-damage, "Curse of Sacrifice tick")
   }, 1000)
 
   enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
@@ -353,22 +438,6 @@ const attack = (spell: Function) => {
   spell()
 }
 
-// TODO: Demon ticks are happening even while time is stopped. Damage is not taken, but gets desynced.
-if (enemy.demon?.active) {
-  const tickDamage = enemy.maxHealth * 0.01 // 1% of health
-
-  enemy.demon.intervalId = setInterval(() => {
-    if (enemy.curseOfPain.active) {
-      changeHealth(-tickDamage, "Demon degen")
-    }
-  }, 1000)
-}
-
-initOneManBand()
-
-// Init UI values.
-ui.update()
-
 const attackButton = document.getElementById('attack') as HTMLButtonElement
 attackButton.onclick = () => attack(() => {
   if (attackTypeSelectElement.value == "curse-of-pain") {
@@ -377,3 +446,5 @@ attackButton.onclick = () => attack(() => {
     return curseOfSacrifice()
   }
 })
+
+init()
