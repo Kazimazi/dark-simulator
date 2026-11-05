@@ -163,10 +163,10 @@ const SPELL = {
       }
     },
     direct: () => {
+      const { magic: magicDamage, true: trueDamage } = SPELL.curseOfPain.calcDamage()
+
       if (!enemy.curseOfPain.active) {
         enemy.curseOfPain.active = true
-
-        const { magic: magicDamage, true: trueDamage } = SPELL.curseOfPain.calcDamage()
         let damage: number = 0
 
         // Handle magic damage.
@@ -199,12 +199,11 @@ const SPELL = {
       }
 
       // Apply the dot part as well.
-      SPELL.curseOfPain.dot()
+      SPELL.curseOfPain.dot(magicDamage, trueDamage)
     },
-    dot: () => {
+    dot: (magicDamage: number, trueDamage: number) => {
       ui.continueTime()
       enemy.curseOfPain.intervalId = setInterval(() => {
-        const { magic: magicDamage, true: trueDamage } = SPELL.curseOfPain.calcDamage()
         const magicTickDamage = magicDamage * 0.5 / CURSE_OF_PAIN_DURATION
         const trueTickDamage = trueDamage * 0.5 / CURSE_OF_PAIN_DURATION
 
