@@ -2,6 +2,7 @@ const CURSE_OF_PAIN_DURATION = 8 // Seconds.
 const CURSE_OF_PAIN_BASE_DAMAGE = 15
 const CURSE_OF_SACRIFICE_DURATION = 12 // Seconds.
 const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3
+const CURSE_OF_SACRIFICE_HEALTH_BUFF = 30 // TODO: Health buff is 15 srt and 15 vig. Almost certainly not 30 health.
 const ONE_MAN_BAND_HEAL_COEFFICIENT = .2 // Perfect song coefficient.
 const INFERNAL_USERY_DAMAGE = 2 // True damage.
 const PERSEVERANCE_DAMAGE_REDUCTION = 3
@@ -248,12 +249,15 @@ const SPELL = {
   },
   curseOfSacrifice: {
     dot: () => {
-      // TODO: Should increase health by a flat amount (15 str + 15 vigor).
       if (enemy.curseOfSacrifice.active) {
         clearInterval(enemy.curseOfSacrifice.intervalId)
         clearTimeout(enemy.curseOfSacrifice.timeoutId)
       } else {
         enemy.curseOfSacrifice.active = true
+        enemy.health += CURSE_OF_SACRIFICE_HEALTH_BUFF
+        enemy.maxHealth += CURSE_OF_SACRIFICE_HEALTH_BUFF
+        currentHealthElement.innerText = Math.ceil(enemy.health).toString()
+        barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
       }
 
       ui.continueTime()
@@ -283,6 +287,10 @@ const SPELL = {
 
       enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
         enemy.curseOfSacrifice.active = false
+        enemy.health -= CURSE_OF_SACRIFICE_HEALTH_BUFF
+        enemy.maxHealth -= CURSE_OF_SACRIFICE_HEALTH_BUFF
+        currentHealthElement.innerText = Math.ceil(enemy.health).toString()
+        barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
         ui.maybePauseTime()
         clearInterval(enemy.curseOfSacrifice.intervalId)
         enemy.curseOfSacrifice.intervalId = undefined
@@ -390,9 +398,9 @@ perseveranceInputElement.addEventListener('change', function() {
 function initDemon() {
   // TODO: Demon ticks are happening even while time is stopped. Damage is not taken, but gets desynced.
   if (enemy.demon?.active) {
-    const tickDamage = enemy.maxHealth * 0.01 // 1% of health
-
     enemy.demon.intervalId = setInterval(() => {
+      const tickDamage = enemy.maxHealth * 0.01 // 1% of health
+
       if (timeFlow()) {
         changeHealth(-tickDamage, "Demon degen")
       }
