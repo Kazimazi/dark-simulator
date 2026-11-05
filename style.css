@@ -1,0 +1,21 @@
+:root {
+  --health-bar-height: 40px;
+}
+
+#health-bar-border {
+  position: relative;
+  width: 500px;
+  border: 2px solid black;
+}
+
+#health-bar {
+  background-color: red;
+  height: var(--health-bar-height);
+}
+
+#health-bar-text {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  line-height: var(--health-bar-height);
+}

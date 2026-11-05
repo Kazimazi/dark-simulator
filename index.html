@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Darksim</title>
+		<link href="style.css" rel="stylesheet">
+	</head>
+
+	<body>
+		<h1>Kazimazi's Dark and Darker simulator</h1>
+
+		<h2>Enemy</h2>
+    
+    <label for="enemy">Choose a preset:</label>
+
+    <select id="enemy-preset" autocomplete="off">
+      <option value="demon">Demon</option>
+      <option value="ranger">Ranger</option>
+    </select>
+
+		<div>Health: <span id="health"></span></div>
+		<div>Max Health: <span id="max-health"></span></div>
+		<div>Magical Damage Reduction: <span id="magical-damage-reduction"></span></div>
+		<div>Antimagic: <span id="antimagic"></span></div>
+		<div>Perseverance: <span id="perseverance"></span></div>
+		<div>Debuff Duration Reduction: <span id="debuff-duration-reduction"></span></div>
+
+		<h2>Attacker</h2>
+
+		<div>Magical Base Damage: <span id="magical-base-damage"></span></div>
+		<div>Magic Power Bonus: <span id="magic-power-bonus"></span></div>
+		<div>Magic Penetration: <span id="magic-penetration"></span></div>
+		<div>Additional Magic Damage: <span id="additional-magic-damage"></span></div>
+		<div>True Magic Damage: <span id="true-magic-damage"></span></div>
+		<div>Infernal Usery: <span id="infernal-usery"></span></div>
+
+    <br/>
+
+		<div>
+			<button id="attack">Attack</button>
+		</div>
+
+    <br/>
+
+		<div id="health-bar-border">
+			<div id="health-bar"></div>
+			<div id="health-bar-text">
+				health: <span id="current-health"></span>
+				/ <span id="max-health"></span>
+			</div>
+		</div>
+    <div>Time: <span id="time">Paused</span></div>
+		<script type="module" src="./dist/app.js"></script>
+	</body>
+</html>
