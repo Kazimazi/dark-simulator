@@ -53,7 +53,7 @@ const demon: Enemy = {
   antimagic: true, // This is basic to have.
   perseverance: false,
   curseOfWeakness: false,
-  debuffDurationReduction: .2, // 20%
+  debuffDurationReduction: -.2, // 20%
   demon: { active: true },
   oneManBand: { magicalHealing: 21 }, // 21 magical healing can be reached total I think.
 }
@@ -161,7 +161,7 @@ const update = () => {
   magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
   antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
   perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
-  debuffDurationReductionElement.innerText = '-' + (enemy.debuffDurationReduction * 100).toString() + '%'
+  debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
 
   magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
   magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
