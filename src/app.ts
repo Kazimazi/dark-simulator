@@ -250,6 +250,7 @@ const curseOfSacrifice = () => {
     let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
     magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
 
+    // Think it only does a flat amount of damage, no scaling, to added/true magic.
     const tickDamage = CURSE_OF_SACRIFICE_BASE_DAMAGE * magicDamageReduction
     const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
     changeHealth(-finalTickDamage)
