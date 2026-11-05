@@ -8,63 +8,67 @@
 	</head>
 
 	<body>
-		<h1>Kazimazi's Dark and Darker simulator</h1>
+		<header>
+			<h1>Kazimazi's Dark and Darker simulator</h1>
+		</header>
 
-		<h2>Enemy</h2>
+		<section>
+			<h2>Enemy</h2>
 
-		<label for="enemy">Choose a preset:</label>
+			<label for="enemy">Choose a preset:</label>
 
-		<select id="enemy-preset" autocomplete="off">
-			<option value="demon">Demon</option>
-			<option value="ranger">Ranger</option>
-		</select>
-
-		<div>Health: <span id="health"></span></div>
-		<div>Max Health: <span id="max-health"></span></div>
-		<div>Magical Damage Reduction: <span id="magical-damage-reduction"></span></div>
-		<div>Antimagic: <span id="antimagic"></span></div>
-		<div>Perseverance: <span id="perseverance"></span></div>
-		<div>Debuff Duration Reduction: <span id="debuff-duration-reduction"></span></div>
-
-		<label for="ona-man-band">One-Man Band</label>
-		<input type="checkbox" id="one-man-band" name="one-man-band" value="one-man-band">
-
-		<label for="ona-man-band-magical-healing">Magical Healing</label>
-		<input type="text" id="one-man-band-magical-healing" name="one-man-band-magical-healing" value="" autocomplete="off">
-
-		<h2>Attacker</h2>
-
-		<div>Magical Base Damage: <span id="magical-base-damage"></span></div>
-		<div>Magic Power Bonus: <span id="magic-power-bonus"></span></div>
-		<div>Magic Penetration: <span id="magic-penetration"></span></div>
-		<div>Additional Magic Damage: <span id="additional-magic-damage"></span></div>
-		<div>True Magic Damage: <span id="true-magic-damage"></span></div>
-		<div>Infernal Usery: <span id="infernal-usery"></span></div>
-
-		<br>
-
-		<div>
-			<select id="attack-type" autocomplete="off">
-				<option value="curse-of-pain">Curse of Pain</option>
-				<option value="curse-of-sacrifice">Curse of Sacrifice</option>
+			<select id="enemy-preset" autocomplete="off">
+				<option value="demon">Demon</option>
+				<option value="ranger">Ranger</option>
 			</select>
-			<button id="attack">Attack</button>
-		</div>
 
-		<br>
+			<div>Health: <span id="health"></span></div>
+			<div>Max Health: <span id="max-health"></span></div>
+			<div>Magical Damage Reduction: <span id="magical-damage-reduction"></span></div>
+			<div>Antimagic: <span id="antimagic"></span></div>
+			<div>Perseverance: <span id="perseverance"></span></div>
+			<div>Debuff Duration Reduction: <span id="debuff-duration-reduction"></span></div>
 
-		<div id="health-bar-border">
-			<div id="health-bar"></div>
-			<div id="health-bar-text">
-				health: <span id="current-health"></span>
-				/ <span id="bar-max-health"></span>
+			<label for="ona-man-band">One-Man Band</label>
+			<input type="checkbox" id="one-man-band" name="one-man-band" value="one-man-band">
+
+			<label for="ona-man-band-magical-healing">Magical Healing</label>
+			<input type="text" id="one-man-band-magical-healing" name="one-man-band-magical-healing" value="" autocomplete="off">
+
+			<h2>Attacker</h2>
+
+			<div>Magical Base Damage: <span id="magical-base-damage"></span></div>
+			<div>Magic Power Bonus: <span id="magic-power-bonus"></span></div>
+			<div>Magic Penetration: <span id="magic-penetration"></span></div>
+			<div>Additional Magic Damage: <span id="additional-magic-damage"></span></div>
+			<div>True Magic Damage: <span id="true-magic-damage"></span></div>
+			<div>Infernal Usery: <span id="infernal-usery"></span></div>
+
+			<br>
+
+			<div>
+				<select id="attack-type" autocomplete="off">
+					<option value="curse-of-pain">Curse of Pain</option>
+					<option value="curse-of-sacrifice">Curse of Sacrifice</option>
+				</select>
+				<button id="attack">Attack</button>
 			</div>
-		</div>
-		<div>Time: <span id="time">Paused</span></div>
-		<script type="module" src="./app.js"></script>
 
-		<br>
+			<br>
 
-		Made for Early Access Hotfix #130
+			<div id="health-bar-border">
+				<div id="health-bar"></div>
+				<div id="health-bar-text">
+					health: <span id="current-health"></span>
+					/ <span id="bar-max-health"></span>
+				</div>
+			</div>
+			<div>Time: <span id="time">Paused</span></div>
+			<script type="module" src="./app.js"></script>
+		</section>
+
+		<footer>
+			Made for Early Access Hotfix #130
+		</footer>
 	</body>
 </html>

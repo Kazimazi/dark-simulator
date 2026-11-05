@@ -2,6 +2,26 @@
   --health-bar-height: 40px;
 }
 
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0 42px;
+}
+
+header {
+  text-align: center;
+}
+
+section {
+  margin: 20px 0;
+}
+
+footer {
+  margin-top: 100px
+}
+
 #health-bar-border {
   position: relative;
   width: 500px;
