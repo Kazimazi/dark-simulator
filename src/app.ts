@@ -42,37 +42,42 @@ type Enemy = {
   },
 }
 
-/**
- * A normal demon player, with all the unfair things he could get.
- */
-const demon: Enemy = {
-  health: 200,
-  maxHealth: 200,
-  curseOfPain: { active: false },
-  curseOfSacrifice: { active: false },
-  magicDamageReduction: .5, // 50% very normal for a demon in all stat gear.
-  antimagic: true, // This is basic to have.
-  perseverance: false,
-  curseOfWeakness: false,
-  debuffDurationReduction: -.2, // 20%
-  demon: { active: true },
-  oneManBand: { active: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
+
+const PRESET = {
+  /**
+   * A normal demon player, with all the unfair things he could get.
+   */
+  DEMON: {
+    health: 200,
+    maxHealth: 200,
+    curseOfPain: { active: false },
+    curseOfSacrifice: { active: false },
+    magicDamageReduction: .5, // 50% very normal for a demon in all stat gear.
+    antimagic: true, // This is basic to have.
+    perseverance: false,
+    curseOfWeakness: false,
+    debuffDurationReduction: -.2, // 20%
+    demon: { active: true },
+    oneManBand: { active: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
+  } satisfies Enemy,
+  /**
+   * Average ranger with no team synergy.
+   */
+  RANGER: {
+    health: 110,
+    maxHealth: 110,
+    curseOfPain: { active: false },
+    curseOfSacrifice: { active: false },
+    magicDamageReduction: .1, // 50% very normal for a demon in all stat gear.
+    antimagic: false,
+    perseverance: false,
+    curseOfWeakness: false,
+    debuffDurationReduction: 0,
+    oneManBand: { active: false, magicalHealing: 21 },
+  } satisfies Enemy,
 }
 
-const ranger: Enemy = {
-  health: 110,
-  maxHealth: 110,
-  curseOfPain: { active: false },
-  curseOfSacrifice: { active: false },
-  magicDamageReduction: .1, // 50% very normal for a demon in all stat gear.
-  antimagic: false,
-  perseverance: false,
-  curseOfWeakness: false,
-  debuffDurationReduction: 0,
-  oneManBand: { active: false, magicalHealing: 21 },
-}
-
-let enemy: Enemy = structuredClone(demon)
+let enemy: Enemy = structuredClone(PRESET.DEMON)
 
 /**
  * An attacker in full all stat rare gear, ready to ruin normal lobbies.
@@ -215,9 +220,9 @@ enemyPresetElement.addEventListener('change', function() {
   ui.pauseTime()
 
   if (this.value == "demon") {
-    enemy = structuredClone(demon)
+    enemy = structuredClone(PRESET.DEMON)
   } else if (this.value == "ranger") {
-    enemy = structuredClone(ranger)
+    enemy = structuredClone(PRESET.RANGER)
   }
 
   ui.update()
