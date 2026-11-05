@@ -241,7 +241,7 @@ const SPELL = {
 
       enemy.curseOfPain.timeoutId = setTimeout(() => {
         enemy.curseOfPain.active = false
-        ui.maybePauseTime()
+        ui.pauseTime()
         clearInterval(enemy.curseOfPain.intervalId)
         enemy.curseOfPain.intervalId = undefined
       }, (CURSE_OF_PAIN_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000) // Base duration + 1 because the first tick doesn't happen immediately.
@@ -291,7 +291,7 @@ const SPELL = {
         enemy.maxHealth -= CURSE_OF_SACRIFICE_HEALTH_BUFF
         currentHealthElement.innerText = Math.ceil(enemy.health).toString()
         barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
-        ui.maybePauseTime()
+        ui.pauseTime()
         clearInterval(enemy.curseOfSacrifice.intervalId)
         enemy.curseOfSacrifice.intervalId = undefined
       }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
@@ -335,14 +335,6 @@ const ui = {
   },
   continueTime: () => {
     timeElement.innerText = "Going"
-  },
-  /**
-   * Pauses time if target is clear of dots.
-   */
-  maybePauseTime: () => {
-    if (timeFlow()) {
-      ui.pauseTime()
-    }
   },
 }
 
