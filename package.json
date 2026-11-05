@@ -4,7 +4,7 @@
     "typescript": "^7.0.2"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp ./src/index.html ./dist/ && cp ./src/style.css ./dist/",
     "watch": "tsc --watch"
   }
 }
