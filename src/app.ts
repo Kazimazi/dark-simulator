@@ -197,6 +197,15 @@ const curseOfPainDamage = () => {
     + attacker.trueMagicDamage
 }
 
+/**
+ * Stops time if target is clear of dots.
+ */
+const maybeStopTime = () => {
+  if (!enemy.curseOfPain && !enemy.curseOfSacrifice) {
+    timeElement.innerText = "Paused"
+  }
+}
+
 const applyDot = () => {
   timeElement.innerText = "Going"
   enemy.curseOfPain.intervalId = setInterval(() => {
@@ -207,7 +216,7 @@ const applyDot = () => {
 
   enemy.curseOfPain.timeoutId = setTimeout(() => {
     enemy.curseOfPain.active = false
-    timeElement.innerText = "Paused"
+    maybeStopTime()
     clearInterval(enemy.curseOfPain.intervalId)
     enemy.curseOfPain.intervalId = undefined
   }, (CURSE_OF_PAIN_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000) // Base duration + 1 because the first tick doesn't happen immediately.
@@ -248,7 +257,7 @@ const curseOfSacrifice = () => {
 
   enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
     enemy.curseOfSacrifice.active = false
-    timeElement.innerText = "Paused"
+    maybeStopTime()
     clearInterval(enemy.curseOfSacrifice.intervalId)
     enemy.curseOfSacrifice.intervalId = undefined
   }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
