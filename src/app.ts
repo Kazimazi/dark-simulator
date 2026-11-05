@@ -254,8 +254,8 @@ const SPELL = {
         clearTimeout(enemy.curseOfSacrifice.timeoutId)
       } else {
         enemy.curseOfSacrifice.active = true
-        enemy.health += CURSE_OF_SACRIFICE_HEALTH_BUFF
         enemy.maxHealth += CURSE_OF_SACRIFICE_HEALTH_BUFF
+        changeHealth(CURSE_OF_SACRIFICE_HEALTH_BUFF, "Curse of Sacrifice health buff added")
         currentHealthElement.innerText = Math.ceil(enemy.health).toString()
         barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
       }
@@ -287,8 +287,8 @@ const SPELL = {
 
       enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
         enemy.curseOfSacrifice.active = false
-        enemy.health -= CURSE_OF_SACRIFICE_HEALTH_BUFF
         enemy.maxHealth -= CURSE_OF_SACRIFICE_HEALTH_BUFF
+        changeHealth(-CURSE_OF_SACRIFICE_HEALTH_BUFF, "Curse of Sacrifice health buff remove")
         currentHealthElement.innerText = Math.ceil(enemy.health).toString()
         barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
         ui.maybePauseTime()
@@ -350,14 +350,15 @@ const ui = {
  * Change health, handling when hp goes below 0 or above maxHealth. On death stops healing effects.
  */
 const changeHealth = (d: number, source: string) => {
-  const newHealth = Math.min(enemy.health + d, enemy.maxHealth)
+  const newHealth = Math.max(Math.min(enemy.health + d, enemy.maxHealth), 0)
   console.log(`Change health: ${source} ${d}`)
+  console.log('>>>', newHealth)
   if (newHealth > 0) {
     enemy.health = newHealth
     ui.updateHealth()
   } else {
-    enemy.health = 0
     clearTimeout(enemy.oneManBand.intervalId)
+    enemy.health = newHealth
     ui.updateHealth(true)
   }
 }
