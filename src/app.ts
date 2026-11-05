@@ -96,8 +96,8 @@ let enemyPresetElement = document.getElementById('enemy-preset') as HTMLSelectEl
 let healthElement = document.getElementById('health')
 let maxHealthElement = document.getElementById('max-health')
 let magicalDamageReductionElement = document.getElementById('magical-damage-reduction')
-let antimagicElement = document.getElementById('antimagic')
-let perseveranceElement = document.getElementById('perseverance')
+let antimagicInputElement = document.getElementById('antimagic') as HTMLInputElement
+let perseveranceInputElement = document.getElementById('perseverance') as HTMLInputElement
 let debuffDurationReductionElement = document.getElementById('debuff-duration-reduction')
 let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInputElement
 let oneManBandMagicalHealingInputElement = document.getElementById('one-man-band-magical-healing') as HTMLInputElement
@@ -108,7 +108,7 @@ let magicPowerBonusElement = document.getElementById('magic-power-bonus')
 let magicPenetrationElement = document.getElementById('magic-penetration')
 let additionalMagicDamageElement = document.getElementById('additional-magic-damage')
 let trueMagicDamageElement = document.getElementById('true-magic-damage')
-let infernalUseryElement = document.getElementById('infernal-usery')
+let infernalUseryInputElement = document.getElementById('infernal-usery') as HTMLInputElement
 
 // Elements around health bar.
 let attackTypeSelectElement = document.getElementById('attack-type') as HTMLSelectElement
@@ -127,8 +127,8 @@ if (
     && currentHealthElement
     && barMaxHealthElement
     && magicalDamageReductionElement
-    && antimagicElement
-    && perseveranceElement
+    && antimagicInputElement
+    && perseveranceInputElement
     && debuffDurationReductionElement
     && oneManBandInputElement
     && oneManBandMagicalHealingInputElement
@@ -139,7 +139,7 @@ if (
     && magicPenetrationElement
     && additionalMagicDamageElement
     && trueMagicDamageElement
-    && infernalUseryElement
+    && infernalUseryInputElement
     && timeElement
   )
 ) {
@@ -161,8 +161,8 @@ const ui = {
     maxHealthElement.innerText = enemy.maxHealth.toString()
     barMaxHealthElement.innerText = enemy.maxHealth.toString()
     magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
-    antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
-    perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
+    antimagicInputElement.checked = enemy.antimagic
+    perseveranceInputElement.checked = enemy.perseverance
     debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
     oneManBandInputElement.checked = enemy.oneManBand.active == true
     oneManBandMagicalHealingInputElement.value =
@@ -175,7 +175,7 @@ const ui = {
     magicPenetrationElement.innerText = (attacker.magicPenetration * 100).toString() + '%'
     additionalMagicDamageElement.innerText = attacker.additionalMagicDamage.toString()
     trueMagicDamageElement.innerText = attacker.trueMagicDamage.toString()
-    infernalUseryElement.innerText = attacker.infernalUsery ? "ON" : "OFF"
+    infernalUseryInputElement.checked = attacker.infernalUsery
   },
   pauseTime: () => {
     timeElement.innerText = "Paused"
@@ -228,6 +228,14 @@ enemyPresetElement.addEventListener('change', function() {
   ui.update()
 })
 
+antimagicInputElement.addEventListener('change', function() {
+  enemy.antimagic = this.checked
+})
+
+perseveranceInputElement.addEventListener('change', function() {
+  enemy.perseverance = this.checked
+})
+
 function initOneManBand() {
   enemy.oneManBand.intervalId = setInterval(() => {
     // Only change health, while One-Man Band is still active.
@@ -261,6 +269,10 @@ oneManBandMagicalHealingInputElement.addEventListener('change', function() {
       console.log("Set magical healing to", magicalHealing)
     }
   }
+})
+
+infernalUseryInputElement.addEventListener('change', function() {
+  attacker.infernalUsery = this.checked
 })
 
 const curseOfPainDamage = () => {
