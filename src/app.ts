@@ -36,6 +36,7 @@ type Enemy = {
     intervalId?: number | undefined,
   },
   oneManBand?: {
+    present: boolean,
     magicalHealing: number, // Magical healing. TODO: I don't know how often it heals, my guess is every second. Needs testing.
     intervalId?: number | undefined,
   },
@@ -55,7 +56,7 @@ const demon: Enemy = {
   curseOfWeakness: false,
   debuffDurationReduction: -.2, // 20%
   demon: { active: true },
-  oneManBand: { magicalHealing: 21 }, // 21 magical healing can be reached total I think.
+  oneManBand: { present: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
 }
 
 const ranger: Enemy = {
@@ -90,6 +91,7 @@ let magicalDamageReductionElement = document.getElementById('magical-damage-redu
 let antimagicElement = document.getElementById('antimagic')
 let perseveranceElement = document.getElementById('perseverance')
 let debuffDurationReductionElement = document.getElementById('debuff-duration-reduction')
+let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInputElement
 
 // Elements under attacker header.
 let magicalBaseDamageElement = document.getElementById('magical-base-damage')
@@ -117,6 +119,7 @@ if (
     && antimagicElement
     && perseveranceElement
     && debuffDurationReductionElement
+    && oneManBandInputElement
     && healthBarElement
     && healthBarContainerElement
     && magicalBaseDamageElement
@@ -138,10 +141,11 @@ const updateHealth = (isDead = false) => {
 }
 
 /**
- * Change health, handling when hp goes below 0. On death stops healing effects.
+ * Change health, handling when hp goes below 0 or above maxHealth. On death stops healing effects.
  */
-const changeHealth = (d: number) => {
-  const newHealth = enemy.health + d
+const changeHealth = (d: number, source: string) => {
+  const newHealth = Math.min(enemy.health + d, enemy.maxHealth)
+  console.log(`Change health: ${source} ${d}`)
   if (newHealth > 0) {
     enemy.health = newHealth
     updateHealth()
@@ -162,6 +166,7 @@ const update = () => {
   antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
   perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
   debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
+  oneManBandInputElement.checked = enemy.oneManBand?.present == true
 
   magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
   magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
@@ -171,11 +176,19 @@ const update = () => {
   infernalUseryElement.innerText = attacker.infernalUsery ? "ON" : "OFF"
 }
 
+const pauseTime = () => {
+  timeElement.innerText = "Paused"
+}
+
 enemyPresetElement.addEventListener('change', function() {
   clearInterval(enemy.curseOfPain.intervalId)
   clearTimeout(enemy.curseOfPain.timeoutId)
+  clearInterval(enemy.curseOfSacrifice.intervalId)
+  clearTimeout(enemy.curseOfSacrifice.timeoutId)
   clearTimeout(enemy.demon?.intervalId)
   clearTimeout(enemy.oneManBand?.intervalId)
+
+  pauseTime()
 
   if (this.value == "demon") {
     enemy = structuredClone(demon)
@@ -184,6 +197,35 @@ enemyPresetElement.addEventListener('change', function() {
   }
 
   update()
+})
+
+function maybeDeployOneManBand() {
+  if (enemy.oneManBand?.present) {
+    const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
+
+    enemy.oneManBand.intervalId = setInterval(() => {
+      if (enemy.curseOfPain.active || enemy.curseOfSacrifice.active) {
+        changeHealth(tickHeal, "One-Man Band")
+      }
+    }, 1000)
+  }
+}
+
+oneManBandInputElement.addEventListener('change', function() {
+  // Toggle One-Man Band logic
+  if (this.checked) {
+    enemy.oneManBand = {
+      present: true,
+      magicalHealing: 21, // TODO: parameterize
+    }
+
+    maybeDeployOneManBand()
+  } else {
+    if (enemy.oneManBand) {
+      enemy.oneManBand.present = false
+      clearInterval(enemy.oneManBand?.intervalId)
+    }
+  }
 })
 
 const curseOfPainDamage = () => {
@@ -200,9 +242,9 @@ const curseOfPainDamage = () => {
 /**
  * Stops time if target is clear of dots.
  */
-const maybeStopTime = () => {
-  if (!enemy.curseOfPain && !enemy.curseOfSacrifice) {
-    timeElement.innerText = "Paused"
+const maybePauseTime = () => {
+  if (!enemy.curseOfPain.active && !enemy.curseOfSacrifice.active) {
+    pauseTime()
   }
 }
 
@@ -211,12 +253,12 @@ const applyDot = () => {
   enemy.curseOfPain.intervalId = setInterval(() => {
     const tickDamage = curseOfPainDamage() * 0.5 / CURSE_OF_PAIN_DURATION
     const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
-    changeHealth(-finalTickDamage)
+    changeHealth(-finalTickDamage, "Curse of Pain tick")
   }, 1000)
 
   enemy.curseOfPain.timeoutId = setTimeout(() => {
     enemy.curseOfPain.active = false
-    maybeStopTime()
+    maybePauseTime()
     clearInterval(enemy.curseOfPain.intervalId)
     enemy.curseOfPain.intervalId = undefined
   }, (CURSE_OF_PAIN_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000) // Base duration + 1 because the first tick doesn't happen immediately.
@@ -228,7 +270,7 @@ const curseOfPain = () => {
 
     const damage = curseOfPainDamage()
     const finalDamage = attacker.infernalUsery ? damage + 2 : damage
-    changeHealth(-finalDamage)
+    changeHealth(-finalDamage, "Curse of Pain")
   } else {
     // Clear previous curse.
     clearInterval(enemy.curseOfPain.intervalId)
@@ -243,22 +285,24 @@ const curseOfSacrifice = () => {
   if (enemy.curseOfSacrifice.active) {
     clearInterval(enemy.curseOfSacrifice.intervalId)
     clearTimeout(enemy.curseOfSacrifice.timeoutId)
+  } else {
+    enemy.curseOfSacrifice.active = true
   }
 
   timeElement.innerText = "Going"
-  enemy.curseOfPain.intervalId = setInterval(() => {
+  enemy.curseOfSacrifice.intervalId = setInterval(() => {
     let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
     magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
 
     // Think it only does a flat amount of damage, no scaling, to added/true magic.
-    const tickDamage = CURSE_OF_SACRIFICE_BASE_DAMAGE * magicDamageReduction
+    const tickDamage = CURSE_OF_SACRIFICE_BASE_DAMAGE * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration))
     const finalTickDamage = attacker.infernalUsery ? tickDamage + 2 : tickDamage
-    changeHealth(-finalTickDamage)
+    changeHealth(-finalTickDamage, "Curse of Sacrifice tick")
   }, 1000)
 
   enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
     enemy.curseOfSacrifice.active = false
-    maybeStopTime()
+    maybePauseTime()
     clearInterval(enemy.curseOfSacrifice.intervalId)
     enemy.curseOfSacrifice.intervalId = undefined
   }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
@@ -277,20 +321,12 @@ if (enemy.demon?.active) {
 
   enemy.demon.intervalId = setInterval(() => {
     if (enemy.curseOfPain.active) {
-      changeHealth(-tickDamage)
+      changeHealth(-tickDamage, "Demon degen")
     }
   }, 1000)
 }
 
-if (enemy.oneManBand) {
-  const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
-
-  enemy.oneManBand.intervalId = setInterval(() => {
-    if (enemy.curseOfPain.active) {
-      changeHealth(tickHeal)
-    }
-  }, 1000)
-}
+maybeDeployOneManBand()
 
 // Init UI values.
 update()
