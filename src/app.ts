@@ -340,7 +340,7 @@ const ui = {
    * Pauses time if target is clear of dots.
    */
   maybePauseTime: () => {
-    if (timeFlow()) {
+    if (!dotted()) {
       ui.pauseTime()
     }
   },
