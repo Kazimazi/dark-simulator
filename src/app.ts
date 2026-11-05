@@ -35,8 +35,8 @@ type Enemy = {
     active: boolean,
     intervalId?: number | undefined,
   },
-  oneManBand?: {
-    present: boolean,
+  oneManBand: {
+    active: boolean,
     magicalHealing: number, // Magical healing. TODO: I don't know how often it heals, my guess is every second. Needs testing.
     intervalId?: number | undefined,
   },
@@ -56,7 +56,7 @@ const demon: Enemy = {
   curseOfWeakness: false,
   debuffDurationReduction: -.2, // 20%
   demon: { active: true },
-  oneManBand: { present: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
+  oneManBand: { active: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
 }
 
 const ranger: Enemy = {
@@ -68,7 +68,8 @@ const ranger: Enemy = {
   antimagic: false,
   perseverance: false,
   curseOfWeakness: false,
-  debuffDurationReduction: 0
+  debuffDurationReduction: 0,
+  oneManBand: { active: false, magicalHealing: 21 },
 }
 
 let enemy: Enemy = structuredClone(demon)
@@ -92,6 +93,7 @@ let antimagicElement = document.getElementById('antimagic')
 let perseveranceElement = document.getElementById('perseverance')
 let debuffDurationReductionElement = document.getElementById('debuff-duration-reduction')
 let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInputElement
+let oneManBandMagicalHealingInputElement = document.getElementById('one-man-band-magical-healing') as HTMLInputElement
 
 // Elements under attacker header.
 let magicalBaseDamageElement = document.getElementById('magical-base-damage')
@@ -120,6 +122,7 @@ if (
     && perseveranceElement
     && debuffDurationReductionElement
     && oneManBandInputElement
+    && oneManBandMagicalHealingInputElement
     && healthBarElement
     && healthBarContainerElement
     && magicalBaseDamageElement
@@ -151,7 +154,7 @@ const changeHealth = (d: number, source: string) => {
     updateHealth()
   } else {
     enemy.health = 0
-    clearTimeout(enemy.oneManBand?.intervalId)
+    clearTimeout(enemy.oneManBand.intervalId)
     updateHealth(true)
   }
 }
@@ -166,7 +169,11 @@ const update = () => {
   antimagicElement.innerText = enemy.antimagic ? "ON" : "OFF"
   perseveranceElement.innerText = enemy.perseverance ? "ON" : "OFF"
   debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
-  oneManBandInputElement.checked = enemy.oneManBand?.present == true
+  oneManBandInputElement.checked = enemy.oneManBand.active == true
+  oneManBandMagicalHealingInputElement.value =
+    enemy.oneManBand.magicalHealing !== undefined
+      ? enemy.oneManBand.magicalHealing.toString()
+      : ""
 
   magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
   magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
@@ -186,7 +193,7 @@ enemyPresetElement.addEventListener('change', function() {
   clearInterval(enemy.curseOfSacrifice.intervalId)
   clearTimeout(enemy.curseOfSacrifice.timeoutId)
   clearTimeout(enemy.demon?.intervalId)
-  clearTimeout(enemy.oneManBand?.intervalId)
+  clearTimeout(enemy.oneManBand.intervalId)
 
   pauseTime()
 
@@ -199,31 +206,37 @@ enemyPresetElement.addEventListener('change', function() {
   update()
 })
 
-function maybeDeployOneManBand() {
-  if (enemy.oneManBand?.present) {
-    const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
-
-    enemy.oneManBand.intervalId = setInterval(() => {
+function initOneManBand() {
+  enemy.oneManBand.intervalId = setInterval(() => {
+    // Only change health, while One-Man Band is still active.
+    if (enemy.oneManBand.active) {
+      const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
       if (enemy.curseOfPain.active || enemy.curseOfSacrifice.active) {
         changeHealth(tickHeal, "One-Man Band")
       }
-    }, 1000)
-  }
+    }
+  }, 1000)
 }
 
 oneManBandInputElement.addEventListener('change', function() {
   // Toggle One-Man Band logic
   if (this.checked) {
-    enemy.oneManBand = {
-      present: true,
-      magicalHealing: 21, // TODO: parameterize
-    }
+    enemy.oneManBand.active = true
 
-    maybeDeployOneManBand()
+    initOneManBand()
   } else {
-    if (enemy.oneManBand) {
-      enemy.oneManBand.present = false
-      clearInterval(enemy.oneManBand?.intervalId)
+    enemy.oneManBand.active = false
+    clearInterval(enemy.oneManBand.intervalId)
+  }
+})
+
+oneManBandMagicalHealingInputElement.addEventListener('change', function() {
+  if (enemy.oneManBand) {
+    const magicalHealing = parseInt(this.value)
+    // Validate that input is a number.
+    if (!isNaN(magicalHealing)) {
+      enemy.oneManBand.magicalHealing = magicalHealing
+      console.log("Set magical healing to", magicalHealing)
     }
   }
 })
@@ -326,7 +339,7 @@ if (enemy.demon?.active) {
   }, 1000)
 }
 
-maybeDeployOneManBand()
+initOneManBand()
 
 // Init UI values.
 update()
