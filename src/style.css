@@ -73,6 +73,12 @@ h2 {
   display: inline-block;
   position: relative;
 }
+
+.percent-container>input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
 .percent-container::after {
   position: absolute;
   top: 3px;
