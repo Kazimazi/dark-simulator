@@ -101,12 +101,12 @@ const attacker: Attacker = {
 
 // Elements under enemy header.
 let enemyPresetElement = document.getElementById('enemy-preset') as HTMLSelectElement
-let healthElement = document.getElementById('health')
-let maxHealthElement = document.getElementById('max-health')
-let magicalDamageReductionElement = document.getElementById('magical-damage-reduction')
+let healthInputElement = document.getElementById('health') as HTMLInputElement
+let maxHealthInputElement = document.getElementById('max-health') as HTMLInputElement
+let magicalDamageReductionInputElement = document.getElementById('magical-damage-reduction') as HTMLInputElement
 let antimagicInputElement = document.getElementById('antimagic') as HTMLInputElement
 let perseveranceInputElement = document.getElementById('perseverance') as HTMLInputElement
-let debuffDurationReductionElement = document.getElementById('debuff-duration-reduction')
+let debuffDurationReductionInputElement = document.getElementById('debuff-duration-reduction') as HTMLInputElement
 let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInputElement
 let oneManBandMagicalHealingInputElement = document.getElementById('one-man-band-magical-healing') as HTMLInputElement
 
@@ -129,15 +129,15 @@ let timeElement = document.getElementById('time')
 if (
   !(
     enemyPresetElement
-    && healthElement
-    && maxHealthElement
+    && healthInputElement
+    && maxHealthInputElement
     && attackTypeSelectElement
     && currentHealthElement
     && barMaxHealthElement
-    && magicalDamageReductionElement
+    && magicalDamageReductionInputElement
     && antimagicInputElement
     && perseveranceInputElement
-    && debuffDurationReductionElement
+    && debuffDurationReductionInputElement
     && oneManBandInputElement
     && oneManBandMagicalHealingInputElement
     && healthBarElement
@@ -310,13 +310,13 @@ const ui = {
    */
   update: () => {
     ui.updateHealth()
-    healthElement.innerText = enemy.health.toString()
-    maxHealthElement.innerText = enemy.maxHealth.toString()
+    healthInputElement.value = enemy.health.toString()
+    maxHealthInputElement.value = enemy.maxHealth.toString()
     barMaxHealthElement.innerText = enemy.maxHealth.toString()
-    magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString()
+    magicalDamageReductionInputElement.value = (enemy.magicDamageReduction * 100).toString()
     antimagicInputElement.checked = enemy.antimagic
     perseveranceInputElement.checked = enemy.perseverance
-    debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString()
+    debuffDurationReductionInputElement.value = (enemy.debuffDurationReduction * 100).toString()
     oneManBandInputElement.checked = enemy.oneManBand.active == true
     oneManBandMagicalHealingInputElement.value =
       enemy.oneManBand.magicalHealing !== undefined
@@ -419,6 +419,27 @@ function initOneManBand() {
     }
   }, 1000)
 }
+
+healthInputElement.addEventListener('change', function() {
+  const health = parseInt(this.value)
+  if (!isNaN(health)) {
+    enemy.health = health
+  }
+})
+
+maxHealthInputElement.addEventListener('change', function() {
+  const maxHealth = parseInt(this.value)
+  if (!isNaN(maxHealth)) {
+    enemy.maxHealth = maxHealth
+  }
+})
+
+debuffDurationReductionInputElement.addEventListener('change', function() {
+  const debuffDurationReduction = parseInt(this.value)
+  if (!isNaN(debuffDurationReduction)) {
+    enemy.debuffDurationReduction = debuffDurationReduction / 100
+  }
+})
 
 oneManBandInputElement.addEventListener('change', function() {
   // Toggle One-Man Band logic
