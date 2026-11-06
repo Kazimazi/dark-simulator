@@ -434,6 +434,13 @@ maxHealthInputElement.addEventListener('change', function() {
   }
 })
 
+magicalDamageReductionInputElement.addEventListener('change', function() {
+  const magicDamageReduction = parseInt(this.value)
+  if (!isNaN(magicDamageReduction)) {
+    enemy.magicDamageReduction = magicDamageReduction / 100
+  }
+})
+
 debuffDurationReductionInputElement.addEventListener('change', function() {
   const debuffDurationReduction = parseInt(this.value)
   if (!isNaN(debuffDurationReduction)) {
