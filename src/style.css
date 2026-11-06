@@ -56,6 +56,7 @@ h2 {
 #health-bar {
   background-color: red;
   height: var(--health-bar-height);
+  transition: width 0.1s linear;
 }
 
 #health-bar-text {
