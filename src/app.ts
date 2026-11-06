@@ -164,7 +164,7 @@ const SPELL = {
           (CURSE_OF_PAIN_BASE_DAMAGE + attacker.magicalBaseDamage)
           * (1 + attacker.magicPowerBonus)
           + attacker.additionalMagicDamage
-        ) * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration)),
+        ) * (1 - magicDamageReduction * (1 - attacker.magicPenetration)),
         true: attacker.trueMagicDamage,
       }
     },
