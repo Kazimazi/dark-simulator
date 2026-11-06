@@ -13,43 +13,69 @@
 		</header>
 
 		<section>
-			<h2>Enemy</h2>
+			<div id="parameters">
+				<div id="enemy">
+					<h2>Enemy</h2>
 
-			<label for="enemy">Choose a preset:</label>
+					<div id="enemy-parameters">
+						<label for="enemy">Choose a preset</label>
+						<select id="enemy-preset" class="row-2" autocomplete="off">
+							<option value="demon">Demon</option>
+							<option value="ranger">Ranger</option>
+						</select>
 
-			<select id="enemy-preset" autocomplete="off">
-				<option value="demon">Demon</option>
-				<option value="ranger">Ranger</option>
-			</select>
+						<label>Health</label>
+						<span id="health"></span>
 
-			<div>Health: <span id="health"></span></div>
-			<div>Max Health: <span id="max-health"></span></div>
-			<div>Magical Damage Reduction: <span id="magical-damage-reduction"></span></div>
+						<label>Max Health</label>
+						<div id="max-health"></div>
 
-			<label for="antimagic">Antimagic</label>
-			<input type="checkbox" id="antimagic" name="antimagic">
+						<label>Magical Damage Reduction</label>
+						<div id="magical-damage-reduction">Placeholder</div>
 
-			<label for="perseverance">Perseverance</label>
-			<input type="checkbox" id="perseverance" name="perseverance">
+						<label for="antimagic">Antimagic</label>
+						<div><input type="checkbox" id="antimagic" name="antimagic"></div>
 
-			<div>Debuff Duration Reduction: <span id="debuff-duration-reduction"></span></div>
+						<label for="perseverance">Perseverance</label>
+						<div><input type="checkbox" id="perseverance" name="perseverance"></div>
 
-			<label for="ona-man-band">One-Man Band</label>
-			<input type="checkbox" id="one-man-band" name="one-man-band">
+						<label for="debuff-duration-reduction">Debuff Duration Reduction</label>
+						<div id="debuff-duration-reduction"></div>
 
-			<label for="ona-man-band-magical-healing">Magical Healing</label>
-			<input type="text" id="one-man-band-magical-healing" name="one-man-band-magical-healing" value="" autocomplete="off">
+						<label for="ona-man-band">One-Man Band</label>
+						<div><input type="checkbox" id="one-man-band" name="one-man-band"></div>
 
-			<h2>Attacker</h2>
+						<label for="ona-man-band-magical-healing">Magical Healing</label>
+						<input type="text" id="one-man-band-magical-healing" name="one-man-band-magical-healing" value="" autocomplete="off">
+					</div>
+				</div>
 
-			<div>Magical Base Damage: <span id="magical-base-damage"></span></div>
-			<div>Magic Power Bonus: <span id="magic-power-bonus"></span></div>
-			<div>Magic Penetration: <span id="magic-penetration"></span></div>
-			<div>Additional Magic Damage: <span id="additional-magic-damage"></span></div>
-			<div>True Magic Damage: <span id="true-magic-damage"></span></div>
+				<hr>
 
-			<label for="infernal-usery">Infernal Usery</label>
-			<input type="checkbox" id="infernal-usery" name="infernal-usery">
+				<div id="attadcker">
+					<h2>Attacker</h2>
+
+					<div id="attacker-parameters">
+						<label>Magical Base Damage</label>
+						<div id="magical-base-damage" class="row-2"></div>
+
+						<label>Magic Power Bonus</label>
+						<div id="magic-power-bonus"></div>
+
+						<label>Magic Penetration</label>
+						<div id="magic-penetration"></div>
+
+						<label>Additional Magic Damage</label>
+						<div id="additional-magic-damage"></div>
+
+						<label>True Magic Damage</label>
+						<div id="true-magic-damage"></div>
+
+						<label for="infernal-usery">Infernal Usery</label>
+						<div><input type="checkbox" id="infernal-usery" name="infernal-usery"></div>
+					</div>
+				</div>
+			</div>
 
 			<br>
 
@@ -63,14 +89,17 @@
 
 			<br>
 
-			<div id="health-bar-border">
-				<div id="health-bar"></div>
-				<div id="health-bar-text">
-					<span id="current-health"></span>
-					/ <span id="bar-max-health"></span>
+			<div id="status">
+				<div id="health-bar-border">
+					<div id="health-bar"></div>
+					<div id="health-bar-text">
+						<span id="current-health"></span>
+						/ <span id="bar-max-health"></span>
+					</div>
 				</div>
+				<div id="time-wrapper">Time: <span id="time">Paused</span></div>
 			</div>
-			<div>Time: <span id="time">Paused</span></div>
+
 			<script type="module" src="./app.js"></script>
 		</section>
 
