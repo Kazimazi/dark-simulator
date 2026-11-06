@@ -111,11 +111,11 @@ let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInpu
 let oneManBandMagicalHealingInputElement = document.getElementById('one-man-band-magical-healing') as HTMLInputElement
 
 // Elements under attacker header.
-let magicalBaseDamageElement = document.getElementById('magical-base-damage')
-let magicPowerBonusElement = document.getElementById('magic-power-bonus')
-let magicPenetrationElement = document.getElementById('magic-penetration')
-let additionalMagicDamageElement = document.getElementById('additional-magic-damage')
-let trueMagicDamageElement = document.getElementById('true-magic-damage')
+let magicalBaseDamageInputElement = document.getElementById('magical-base-damage') as HTMLInputElement
+let magicPowerBonusInputElement = document.getElementById('magic-power-bonus') as HTMLInputElement
+let magicPenetrationInputElement = document.getElementById('magic-penetration') as HTMLInputElement
+let additionalMagicDamageInputElement = document.getElementById('additional-magic-damage') as HTMLInputElement
+let trueMagicDamageInputElement = document.getElementById('true-magic-damage') as HTMLInputElement
 let infernalUseryInputElement = document.getElementById('infernal-usery') as HTMLInputElement
 
 // Elements around health bar.
@@ -142,11 +142,11 @@ if (
     && oneManBandMagicalHealingInputElement
     && healthBarElement
     && healthBarContainerElement
-    && magicalBaseDamageElement
-    && magicPowerBonusElement
-    && magicPenetrationElement
-    && additionalMagicDamageElement
-    && trueMagicDamageElement
+    && magicalBaseDamageInputElement
+    && magicPowerBonusInputElement
+    && magicPenetrationInputElement
+    && additionalMagicDamageInputElement
+    && trueMagicDamageInputElement
     && infernalUseryInputElement
     && timeElement
   )
@@ -313,21 +313,21 @@ const ui = {
     healthElement.innerText = enemy.health.toString()
     maxHealthElement.innerText = enemy.maxHealth.toString()
     barMaxHealthElement.innerText = enemy.maxHealth.toString()
-    magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString() + '%'
+    magicalDamageReductionElement.innerText = (enemy.magicDamageReduction * 100).toString()
     antimagicInputElement.checked = enemy.antimagic
     perseveranceInputElement.checked = enemy.perseverance
-    debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString() + '%'
+    debuffDurationReductionElement.innerText = (enemy.debuffDurationReduction * 100).toString()
     oneManBandInputElement.checked = enemy.oneManBand.active == true
     oneManBandMagicalHealingInputElement.value =
       enemy.oneManBand.magicalHealing !== undefined
         ? enemy.oneManBand.magicalHealing.toString()
         : ""
 
-    magicalBaseDamageElement.innerText = attacker.magicalBaseDamage.toString()
-    magicPowerBonusElement.innerText = (attacker.magicPowerBonus * 100).toString()
-    magicPenetrationElement.innerText = (attacker.magicPenetration * 100).toString() + '%'
-    additionalMagicDamageElement.innerText = attacker.additionalMagicDamage.toString()
-    trueMagicDamageElement.innerText = attacker.trueMagicDamage.toString()
+    magicalBaseDamageInputElement.value = attacker.magicalBaseDamage.toString()
+    magicPowerBonusInputElement.value = (attacker.magicPowerBonus * 100).toString()
+    magicPenetrationInputElement.value = (attacker.magicPenetration * 100).toString()
+    additionalMagicDamageInputElement.value = attacker.additionalMagicDamage.toString()
+    trueMagicDamageInputElement.value = attacker.trueMagicDamage.toString()
     infernalUseryInputElement.checked = attacker.infernalUsery
   },
   pauseTime: () => {
@@ -352,7 +352,6 @@ const ui = {
 const changeHealth = (d: number, source: string) => {
   const newHealth = Math.max(Math.min(enemy.health + d, enemy.maxHealth), 0)
   console.log(`Change health: ${source} ${d}`)
-  console.log('>>>', newHealth)
   if (newHealth > 0) {
     enemy.health = newHealth
     ui.updateHealth()
@@ -441,6 +440,41 @@ oneManBandMagicalHealingInputElement.addEventListener('change', function() {
       enemy.oneManBand.magicalHealing = magicalHealing
       console.log("Set magical healing to", magicalHealing)
     }
+  }
+})
+
+magicalBaseDamageInputElement.addEventListener('change', function() {
+  const magicalBaseDamage = parseInt(this.value)
+  if (!isNaN(magicalBaseDamage)) {
+    attacker.magicalBaseDamage = magicalBaseDamage
+  }
+})
+
+magicPowerBonusInputElement.addEventListener('change', function() {
+  const magicPowerBonus = parseInt(this.value)
+  if (!isNaN(magicPowerBonus)) {
+    attacker.magicPowerBonus = magicPowerBonus / 100
+  }
+})
+
+magicPenetrationInputElement.addEventListener('change', function() {
+  const magicPenetration = parseInt(this.value)
+  if (!isNaN(magicPenetration)) {
+    attacker.magicPenetration = magicPenetration / 100
+  }
+})
+
+additionalMagicDamageInputElement.addEventListener('change', function() {
+  const additionalMagicDamage = parseInt(this.value)
+  if (!isNaN(additionalMagicDamage)) {
+    attacker.additionalMagicDamage = additionalMagicDamage
+  }
+})
+
+trueMagicDamageInputElement.addEventListener('change', function() {
+  const trueMagicDamage = parseInt(this.value)
+  if (!isNaN(trueMagicDamage)) {
+    attacker.trueMagicDamage = trueMagicDamage
   }
 })
 
