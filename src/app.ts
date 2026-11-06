@@ -3,6 +3,7 @@ const CURSE_OF_PAIN_BASE_DAMAGE = 15
 const CURSE_OF_SACRIFICE_DURATION = 12 // Seconds.
 const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3
 const CURSE_OF_SACRIFICE_HEALTH_BUFF = 30 // TODO: Health buff is 15 srt and 15 vig. Almost certainly not 30 health.
+const DARK_BOLT_BASE_DAMAGE = 20
 const ONE_MAN_BAND_HEAL_COEFFICIENT = .2 // Perfect song coefficient.
 const INFERNAL_USERY_DAMAGE = 2 // True damage.
 const PERSEVERANCE_DAMAGE_REDUCTION = 3
@@ -155,47 +156,65 @@ if (
 }
 
 const SPELL = {
-  curseOfPain: {
-    calcDamage: () => {
-      let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
-      magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
-      return {
-        magic: (
-          (CURSE_OF_PAIN_BASE_DAMAGE + attacker.magicalBaseDamage)
-          * (1 + attacker.magicPowerBonus)
-          + attacker.additionalMagicDamage
-        ) * (1 - magicDamageReduction * (1 - attacker.magicPenetration)),
-        true: attacker.trueMagicDamage,
+  /**
+   * Calculates magic and true parts of a spell.
+   */
+  calcDamage: (opts: {
+    baseDamage: number,
+    hitLocationBonus?: number,
+    projectile?: boolean,
+  }) => {
+    let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
+    magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
+    return {
+      magicDamage: (
+        (opts.baseDamage + attacker.magicalBaseDamage)
+        * (1 + attacker.magicPowerBonus)
+        + attacker.additionalMagicDamage
+      ) * (1 + (opts.hitLocationBonus ? opts.hitLocationBonus : 0))
+        * (1 - magicDamageReduction * (1 - attacker.magicPenetration))
+        // TODO: Projectile damage reduction not not implemented!
+        * (1 - (opts.projectile ? 0 : 0)),
+      trueDamage: attacker.trueMagicDamage,
+    }
+  },
+  /**
+   * Calculates instance of damage dealt. Like tick of dot, or hit of a direct spell.
+   */
+  calcInstanceDamage: (magicDamage: number, trueDamage: number) => {
+    let damage: number = 0
+
+    // Handle magic damage.
+    if (enemy.perseverance) {
+      damage += Math.max(magicDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+    } else {
+      damage += magicDamage
+    }
+
+    // Handle true damage.
+    if (attacker.infernalUsery) {
+      if (enemy.perseverance) {
+        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
+      } else {
+        damage += trueDamage + INFERNAL_USERY_DAMAGE
       }
-    },
+    } else {
+      if (enemy.perseverance) {
+        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+      } else {
+        damage += trueDamage
+      }
+    }
+
+    return damage
+  },
+  curseOfPain: {
     direct: () => {
-      const { magic: magicDamage, true: trueDamage } = SPELL.curseOfPain.calcDamage()
+      const { magicDamage, trueDamage } = SPELL.calcDamage({ baseDamage: CURSE_OF_PAIN_BASE_DAMAGE })
 
       if (!enemy.curseOfPain.active) {
         enemy.curseOfPain.active = true
-        let damage: number = 0
-
-        // Handle magic damage.
-        if (enemy.perseverance) {
-          damage += Math.max(magicDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
-        } else {
-          damage += magicDamage
-        }
-
-        // Handle true damage.
-        if (attacker.infernalUsery) {
-          if (enemy.perseverance) {
-            damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
-          } else {
-            damage += trueDamage + INFERNAL_USERY_DAMAGE
-          }
-        } else {
-          if (enemy.perseverance) {
-            damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
-          } else {
-            damage += trueDamage
-          }
-        }
+        const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage)
 
         changeHealth(-damage, "Curse of Pain")
       } else {
@@ -213,30 +232,9 @@ const SPELL = {
         const magicTickDamage = magicDamage * 0.5 / CURSE_OF_PAIN_DURATION
         const trueTickDamage = trueDamage * 0.5 / CURSE_OF_PAIN_DURATION
 
-        let tickDamage: number = 0
+        const damage = SPELL.calcInstanceDamage(magicTickDamage, trueTickDamage)
 
-        // Handle magic damage.
-        if (enemy.perseverance) {
-          tickDamage += Math.max(magicTickDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
-        } else {
-          tickDamage += magicTickDamage
-        }
-
-        // Handle true damage.
-        if (attacker.infernalUsery) {
-          if (enemy.perseverance) {
-            tickDamage += Math.max(trueTickDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
-          } else {
-            tickDamage += trueTickDamage + INFERNAL_USERY_DAMAGE
-          }
-        } else {
-          if (enemy.perseverance) {
-            tickDamage += Math.max(trueTickDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
-          } else {
-            tickDamage += trueTickDamage
-          }
-        }
-        changeHealth(-tickDamage, "Curse of Pain tick")
+        changeHealth(damage, "Curse of Pain tick")
       }, 1000)
 
       enemy.curseOfPain.timeoutId = setTimeout(() => {
@@ -296,7 +294,20 @@ const SPELL = {
         enemy.curseOfSacrifice.intervalId = undefined
       }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
     }
-  }
+  },
+  darkBolt: {
+    direct: () => {
+      const { magicDamage, trueDamage } = SPELL.calcDamage({
+        baseDamage: DARK_BOLT_BASE_DAMAGE,
+        hitLocationBonus: 0,
+        projectile: true
+      })
+
+      const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage)
+
+      changeHealth(-damage, "Dark Bolt")
+    }
+  },
 }
 
 const ui = {
@@ -523,6 +534,8 @@ attackButton.onclick = () => attack(() => {
     return SPELL.curseOfPain.direct()
   } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
     return SPELL.curseOfSacrifice.dot()
+  } else if (attackTypeSelectElement.value == "dark-bolt") {
+    return SPELL.darkBolt.direct()
   }
 })
 
