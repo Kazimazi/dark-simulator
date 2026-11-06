@@ -7,7 +7,20 @@ html {
 }
 
 body {
-  margin: 0 42px;
+  margin: 0;
+  background-color: #C7BFBF;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
+
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #332727;
+    color: white;
+  }
 }
 
 header {
