@@ -234,7 +234,7 @@ const SPELL = {
 
         const damage = SPELL.calcInstanceDamage(magicTickDamage, trueTickDamage)
 
-        changeHealth(damage, "Curse of Pain tick")
+        changeHealth(-damage, "Curse of Pain tick")
       }, 1000)
 
       enemy.curseOfPain.timeoutId = setTimeout(() => {
