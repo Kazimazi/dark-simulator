@@ -1,0 +1,10 @@
+export const CURSE_OF_PAIN_DURATION = 8; // Seconds.
+export const CURSE_OF_PAIN_BASE_DAMAGE = 15;
+export const CURSE_OF_SACRIFICE_DURATION = 12; // Seconds.
+export const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3;
+export const CURSE_OF_SACRIFICE_HEALTH_BUFF = 30; // TODO: Health buff is 15 srt and 15 vig. Almost certainly not 30 health.
+export const DARK_BOLT_BASE_DAMAGE = 20;
+export const ONE_MAN_BAND_HEAL_COEFFICIENT = 0.2; // Perfect song coefficient.
+export const ONE_MAN_BAND_MAX_MAGICAL_HEALING = 21; // Maximum achivable magical healing amount.
+export const INFERNAL_USERY_DAMAGE = 2; // True damage.
+export const PERSEVERANCE_DAMAGE_REDUCTION = 3;

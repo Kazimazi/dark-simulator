@@ -1,158 +1,194 @@
-const CURSE_OF_PAIN_DURATION = 8 // Seconds.
-const CURSE_OF_PAIN_BASE_DAMAGE = 15
-const CURSE_OF_SACRIFICE_DURATION = 12 // Seconds.
-const CURSE_OF_SACRIFICE_BASE_DAMAGE = 3
-const CURSE_OF_SACRIFICE_HEALTH_BUFF = 30 // TODO: Health buff is 15 srt and 15 vig. Almost certainly not 30 health.
-const DARK_BOLT_BASE_DAMAGE = 20
-const ONE_MAN_BAND_HEAL_COEFFICIENT = .2 // Perfect song coefficient.
-const INFERNAL_USERY_DAMAGE = 2 // True damage.
-const PERSEVERANCE_DAMAGE_REDUCTION = 3
+import {
+  CURSE_OF_PAIN_BASE_DAMAGE,
+  CURSE_OF_PAIN_DURATION,
+  CURSE_OF_SACRIFICE_BASE_DAMAGE,
+  CURSE_OF_SACRIFICE_DURATION,
+  CURSE_OF_SACRIFICE_HEALTH_BUFF,
+  DARK_BOLT_BASE_DAMAGE,
+  INFERNAL_USERY_DAMAGE,
+  ONE_MAN_BAND_HEAL_COEFFICIENT,
+  ONE_MAN_BAND_MAX_MAGICAL_HEALING,
+  PERSEVERANCE_DAMAGE_REDUCTION,
+} from "./constants.js";
+import {
+  enemyPresetElement,
+  healthInputElement,
+  maxHealthInputElement,
+  attackTypeSelectElement,
+  currentHealthElement,
+  barMaxHealthElement,
+  magicalDamageReductionInputElement,
+  antimagicInputElement,
+  perseveranceInputElement,
+  debuffDurationReductionInputElement,
+  oneManBandInputElement,
+  oneManBandMagicalHealingInputElement,
+  healthBarElement,
+  magicalBaseDamageInputElement,
+  magicPowerBonusInputElement,
+  magicPenetrationInputElement,
+  additionalMagicDamageInputElement,
+  trueMagicDamageInputElement,
+  infernalUseryInputElement,
+  attackButton,
+  resumeButton,
+  pauseButton,
+} from "./selectors.js";
+import { Interval, DotTimer } from "./utils.js";
 
-type Attacker = {
-  magicalBaseDamage: number,
-  magicPowerBonus: number,
-  magicPenetration: number,
-  additionalMagicDamage: number,
-  trueMagicDamage: number,
-  infernalUsery: boolean,
+class Attacker {
+  magicalBaseDamage: number;
+  magicPowerBonus: number;
+  magicPenetration: number;
+  additionalMagicDamage: number;
+  trueMagicDamage: number;
+  infernalUsery: boolean;
+
+  constructor(
+    magicalBaseDamage: number,
+    magicPowerBonus: number,
+    magicPenetration: number,
+    additionalMagicDamage: number,
+    trueMagicDamage: number,
+    infernalUsery: boolean,
+  ) {
+    this.magicalBaseDamage = magicalBaseDamage;
+    this.magicPowerBonus = magicPowerBonus;
+    this.magicPenetration = magicPenetration;
+    this.additionalMagicDamage = additionalMagicDamage;
+    this.trueMagicDamage = trueMagicDamage;
+    this.infernalUsery = infernalUsery;
+  }
 }
 
-type Enemy = {
-  health: number,
-  maxHealth: number,
-  curseOfPain: {
-    active: boolean,
-    intervalId?: number | undefined,
-    timeoutId?: number | undefined,
-  },
-  curseOfSacrifice: {
-    active: boolean,
-    intervalId?: number | undefined,
-    timeoutId?: number | undefined,
-  },
-  magicDamageReduction: number,
-  antimagic: boolean,
-  perseverance: boolean,
-  curseOfWeakness: boolean,
-  debuffDurationReduction: number,
-  demon?: {
-    active: boolean,
-    intervalId?: number | undefined,
-  },
-  oneManBand: {
-    active: boolean,
-    magicalHealing: number, // Magical healing. TODO: I don't know how often it heals, my guess is every second. Needs testing.
-    intervalId?: number | undefined,
-  },
+class Enemy {
+  health: number;
+  maxHealth: number;
+  magicDamageReduction: number;
+  antimagic: boolean;
+  perseverance: boolean;
+  debuffDurationReduction: number;
+  buff: {
+    oneManBand: {
+      active: boolean;
+      interval: Interval;
+      magicalHealing: number; // Magical healing. TODO: I don't know how often it heals, my guess is every second. Needs testing.
+    };
+  };
+  debuff: {
+    demonForm: {
+      active: boolean;
+      interval: Interval;
+    };
+    curseOfPain: {
+      active: boolean;
+      timer?: DotTimer;
+    };
+    curseOfSacrifice: {
+      active: boolean;
+      timer?: DotTimer;
+    };
+    curseOfWeakness: {
+      active: boolean;
+    };
+  };
+
+  constructor(
+    health: number,
+    maxHealth: number,
+    magicDamageReduction: number,
+    antimagic: boolean,
+    perseverance: boolean,
+    debuffDurationReduction: number,
+  ) {
+    this.health = health;
+    this.maxHealth = maxHealth;
+    this.magicDamageReduction = magicDamageReduction;
+    this.antimagic = antimagic;
+    this.perseverance = perseverance;
+    this.debuffDurationReduction = debuffDurationReduction;
+    this.buff = {
+      oneManBand: {
+        active: false,
+        magicalHealing: 0,
+        interval: this.initOneManBandInterval(),
+      },
+    };
+    this.debuff = {
+      demonForm: {
+        active: false,
+        interval: this.initDemonFormInterval(),
+      },
+      curseOfPain: { active: false },
+      curseOfSacrifice: { active: false },
+      curseOfWeakness: { active: false },
+    };
+  }
+
+  initOneManBandInterval() {
+    return new Interval(() => {
+      if (this.buff.oneManBand?.magicalHealing) {
+        const tickHeal =
+          1 +
+          this.buff.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT;
+        changeHealth(tickHeal, "One-Man Band");
+      }
+    }, 1000);
+  }
+
+  initDemonFormInterval() {
+    return new Interval(() => {
+      const tickDamage = this.maxHealth * 0.01; // 1% of health
+      changeHealth(-tickDamage, "Demon degen");
+    }, 1000);
+  }
 }
 
-const PRESET = {
-  /**
-   * A normal demon player, with all the unfair things he could get.
-   */
-  DEMON: {
-    health: 200,
-    maxHealth: 200,
-    curseOfPain: { active: false },
-    curseOfSacrifice: { active: false },
-    magicDamageReduction: .5, // 50% very normal for a demon in all stat gear.
-    antimagic: true, // This is basic to have.
-    perseverance: false,
-    curseOfWeakness: false,
-    debuffDurationReduction: -.2, // 20%
-    demon: { active: true },
-    oneManBand: { active: true, magicalHealing: 21 }, // 21 magical healing can be reached total I think.
-  } satisfies Enemy,
-  /**
-   * Average ranger with no team synergy.
-   */
-  RANGER: {
-    health: 110,
-    maxHealth: 110,
-    curseOfPain: { active: false },
-    curseOfSacrifice: { active: false },
-    magicDamageReduction: .1, // 50% very normal for a demon in all stat gear.
-    antimagic: false,
-    perseverance: false,
-    curseOfWeakness: false,
-    debuffDurationReduction: 0,
-    oneManBand: { active: false, magicalHealing: 21 },
-  } satisfies Enemy,
-}
-
-let enemy: Enemy = structuredClone(PRESET.DEMON)
-
-let dotted = () => enemy.curseOfPain.active || enemy.curseOfSacrifice.active
 /**
- * Time either flows or not. It flows, while enemy has active dot.
+ * A normal demon player, with all the unfair things he could get.
  */
-let timeFlow = dotted
-
-/**
- * An attacker in full all stat rare gear, ready to ruin normal lobbies.
- */
-const attacker: Attacker = {
-  magicalBaseDamage: 4, // Rare book.
-  magicPowerBonus: 0.68, // 48 will without stacks around 68%
-  magicPenetration: .05, // 5% coming from rare book.
-  additionalMagicDamage: 0,
-  trueMagicDamage: 6, // 2 rings (cuz we are not rich) + book.
-  infernalUsery: true,
+class Demon extends Enemy {
+  constructor() {
+    super(
+      200,
+      200,
+      0.5, // 50% very normal for a demon in all stat gear.
+      true, // This is basic to have.
+      false,
+      -0.2, // 20%
+    );
+    this.buff.oneManBand.active = true;
+    this.buff.oneManBand.magicalHealing = ONE_MAN_BAND_MAX_MAGICAL_HEALING;
+    this.debuff.demonForm.active = true;
+  }
 }
 
-// Elements under enemy header.
-let enemyPresetElement = document.getElementById('enemy-preset') as HTMLSelectElement
-let healthInputElement = document.getElementById('health') as HTMLInputElement
-let maxHealthInputElement = document.getElementById('max-health') as HTMLInputElement
-let magicalDamageReductionInputElement = document.getElementById('magical-damage-reduction') as HTMLInputElement
-let antimagicInputElement = document.getElementById('antimagic') as HTMLInputElement
-let perseveranceInputElement = document.getElementById('perseverance') as HTMLInputElement
-let debuffDurationReductionInputElement = document.getElementById('debuff-duration-reduction') as HTMLInputElement
-let oneManBandInputElement = document.getElementById('one-man-band') as HTMLInputElement
-let oneManBandMagicalHealingInputElement = document.getElementById('one-man-band-magical-healing') as HTMLInputElement
+/**
+ * Average ranger with no team synergy.
+ */
+class Ranger extends Enemy {
+  constructor() {
+    super(110, 110, 0.1, false, false, 0);
+  }
+}
 
-// Elements under attacker header.
-let magicalBaseDamageInputElement = document.getElementById('magical-base-damage') as HTMLInputElement
-let magicPowerBonusInputElement = document.getElementById('magic-power-bonus') as HTMLInputElement
-let magicPenetrationInputElement = document.getElementById('magic-penetration') as HTMLInputElement
-let additionalMagicDamageInputElement = document.getElementById('additional-magic-damage') as HTMLInputElement
-let trueMagicDamageInputElement = document.getElementById('true-magic-damage') as HTMLInputElement
-let infernalUseryInputElement = document.getElementById('infernal-usery') as HTMLInputElement
+export class GameState {
+  play: boolean;
+  enemy: Enemy;
+  attacker: Attacker;
 
-// Elements around health bar.
-let attackTypeSelectElement = document.getElementById('attack-type') as HTMLSelectElement
-let currentHealthElement = document.getElementById('current-health')
-let barMaxHealthElement = document.getElementById('bar-max-health')
-let healthBarContainerElement = document.getElementById('health-bar-border')
-let healthBarElement = document.getElementById('health-bar')
-let timeElement = document.getElementById('time')
-
-if (
-  !(
-    enemyPresetElement
-    && healthInputElement
-    && maxHealthInputElement
-    && attackTypeSelectElement
-    && currentHealthElement
-    && barMaxHealthElement
-    && magicalDamageReductionInputElement
-    && antimagicInputElement
-    && perseveranceInputElement
-    && debuffDurationReductionInputElement
-    && oneManBandInputElement
-    && oneManBandMagicalHealingInputElement
-    && healthBarElement
-    && healthBarContainerElement
-    && magicalBaseDamageInputElement
-    && magicPowerBonusInputElement
-    && magicPenetrationInputElement
-    && additionalMagicDamageInputElement
-    && trueMagicDamageInputElement
-    && infernalUseryInputElement
-    && timeElement
-  )
-) {
-  throw Error("Something went wrong")
+  constructor() {
+    this.play = false;
+    this.enemy = new Demon();
+    this.attacker = new Attacker(
+      4, // Rare book.
+      0.68, // 48 will without stacks around 68%
+      0.05, // 5% coming from rare book.
+      0,
+      6, // 2 rings (cuz we are not rich) + book.
+      true,
+    );
+  }
 }
 
 const SPELL = {
@@ -160,383 +196,430 @@ const SPELL = {
    * Calculates magic and true parts of a spell.
    */
   calcDamage: (opts: {
-    baseDamage: number,
-    hitLocationBonus?: number,
-    projectile?: boolean,
+    baseDamage: number;
+    hitLocationBonus?: number;
+    projectile?: boolean;
   }) => {
-    let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
-    magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
+    let magicDamageReduction = gameState.enemy.antimagic
+      ? gameState.enemy.magicDamageReduction + 0.25
+      : gameState.enemy.magicDamageReduction;
+    magicDamageReduction = gameState.enemy.debuff.curseOfWeakness.active
+      ? magicDamageReduction - 0.15
+      : magicDamageReduction;
     return {
-      magicDamage: (
-        (opts.baseDamage + attacker.magicalBaseDamage)
-        * (1 + attacker.magicPowerBonus)
-        + attacker.additionalMagicDamage
-      ) * (1 + (opts.hitLocationBonus ? opts.hitLocationBonus : 0))
-        * (1 - magicDamageReduction * (1 - attacker.magicPenetration))
+      magicDamage:
+        ((opts.baseDamage + gameState.attacker.magicalBaseDamage) *
+          (1 + gameState.attacker.magicPowerBonus) +
+          gameState.attacker.additionalMagicDamage) *
+        (1 + (opts.hitLocationBonus ? opts.hitLocationBonus : 0)) *
+        (1 - magicDamageReduction * (1 - gameState.attacker.magicPenetration)) *
         // TODO: Projectile damage reduction not not implemented!
-        * (1 - (opts.projectile ? 0 : 0)),
-      trueDamage: attacker.trueMagicDamage,
-    }
+        (1 - (opts.projectile ? 0 : 0)),
+      trueDamage: gameState.attacker.trueMagicDamage,
+    };
   },
   /**
    * Calculates instance of damage dealt. Like tick of dot, or hit of a direct spell.
    */
   calcInstanceDamage: (magicDamage: number, trueDamage: number) => {
-    let damage: number = 0
+    let damage: number = 0;
 
     // Handle magic damage.
-    if (enemy.perseverance) {
-      damage += Math.max(magicDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+    if (gameState.enemy.perseverance) {
+      damage += Math.max(magicDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1);
     } else {
-      damage += magicDamage
+      damage += magicDamage;
     }
 
     // Handle true damage.
-    if (attacker.infernalUsery) {
-      if (enemy.perseverance) {
-        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE, 1)
+    if (gameState.attacker.infernalUsery) {
+      if (gameState.enemy.perseverance) {
+        damage += Math.max(
+          trueDamage - PERSEVERANCE_DAMAGE_REDUCTION + INFERNAL_USERY_DAMAGE,
+          1,
+        );
       } else {
-        damage += trueDamage + INFERNAL_USERY_DAMAGE
+        damage += trueDamage + INFERNAL_USERY_DAMAGE;
       }
     } else {
-      if (enemy.perseverance) {
-        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1)
+      if (gameState.enemy.perseverance) {
+        damage += Math.max(trueDamage - PERSEVERANCE_DAMAGE_REDUCTION, 1);
       } else {
-        damage += trueDamage
+        damage += trueDamage;
       }
     }
 
-    return damage
+    return damage;
   },
   curseOfPain: {
     direct: () => {
-      const { magicDamage, trueDamage } = SPELL.calcDamage({ baseDamage: CURSE_OF_PAIN_BASE_DAMAGE })
-
-      if (!enemy.curseOfPain.active) {
-        enemy.curseOfPain.active = true
-        const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage)
-
-        changeHealth(-damage, "Curse of Pain")
-      } else {
-        // Clear previous curse.
-        clearInterval(enemy.curseOfPain.intervalId)
-        clearTimeout(enemy.curseOfPain.timeoutId)
+      const { magicDamage, trueDamage } = SPELL.calcDamage({
+        baseDamage: CURSE_OF_PAIN_BASE_DAMAGE,
+      });
+      if (!gameState.enemy.debuff.curseOfPain.active) {
+        const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage);
+        changeHealth(-damage, "Curse of Pain");
       }
-
-      // Apply the dot part as well.
-      SPELL.curseOfPain.dot(magicDamage, trueDamage)
+      if (gameState.enemy.debuff.curseOfPain.active) {
+        gameState.enemy.debuff.curseOfPain.timer?.stop();
+      }
+      SPELL.curseOfPain.dot(magicDamage, trueDamage);
     },
     dot: (magicDamage: number, trueDamage: number) => {
-      ui.continueTime()
-      enemy.curseOfPain.intervalId = setInterval(() => {
-        const magicTickDamage = magicDamage * 0.5 / CURSE_OF_PAIN_DURATION
-        const trueTickDamage = trueDamage * 0.5 / CURSE_OF_PAIN_DURATION
+      gameState.enemy.debuff.curseOfPain.active = true;
+      gameState.enemy.debuff.curseOfPain.timer = new DotTimer(
+        () => {
+          const magicTickDamage = (magicDamage * 0.5) / CURSE_OF_PAIN_DURATION;
+          const trueTickDamage = (trueDamage * 0.5) / CURSE_OF_PAIN_DURATION;
 
-        const damage = SPELL.calcInstanceDamage(magicTickDamage, trueTickDamage)
+          const damage = SPELL.calcInstanceDamage(
+            magicTickDamage,
+            trueTickDamage,
+          );
 
-        changeHealth(-damage, "Curse of Pain tick")
-      }, 1000)
-
-      enemy.curseOfPain.timeoutId = setTimeout(() => {
-        enemy.curseOfPain.active = false
-        ui.maybePauseTime()
-        clearInterval(enemy.curseOfPain.intervalId)
-        enemy.curseOfPain.intervalId = undefined
-      }, (CURSE_OF_PAIN_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000) // Base duration + 1 because the first tick doesn't happen immediately.
+          changeHealth(-damage, "Curse of Pain tick");
+        },
+        () => {
+          gameState.enemy.debuff.curseOfPain.active = false;
+        },
+        1000,
+        CURSE_OF_PAIN_DURATION *
+          (1 + gameState.enemy.debuffDurationReduction) *
+          1000,
+      );
     },
   },
   curseOfSacrifice: {
     dot: () => {
-      if (enemy.curseOfSacrifice.active) {
-        clearInterval(enemy.curseOfSacrifice.intervalId)
-        clearTimeout(enemy.curseOfSacrifice.timeoutId)
-      } else {
-        enemy.curseOfSacrifice.active = true
-        enemy.maxHealth += CURSE_OF_SACRIFICE_HEALTH_BUFF
-        changeHealth(CURSE_OF_SACRIFICE_HEALTH_BUFF, "Curse of Sacrifice health buff added")
-        currentHealthElement.innerText = Math.ceil(enemy.health).toString()
-        barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
+      if (!currentHealthElement || !barMaxHealthElement) {
+        throw Error("UI element not found.");
+      }
+      if (gameState.enemy.debuff.curseOfSacrifice.active) {
+        gameState.enemy.debuff.curseOfSacrifice.timer?.stop();
       }
 
-      ui.continueTime()
-      enemy.curseOfSacrifice.intervalId = setInterval(() => {
-        let magicDamageReduction = enemy.antimagic ? enemy.magicDamageReduction + 0.25 : enemy.magicDamageReduction
-        magicDamageReduction = enemy.curseOfWeakness ? magicDamageReduction - 0.15 : magicDamageReduction
+      gameState.enemy.debuff.curseOfSacrifice.active = true;
+      gameState.enemy.maxHealth += CURSE_OF_SACRIFICE_HEALTH_BUFF;
+      changeHealth(
+        CURSE_OF_SACRIFICE_HEALTH_BUFF,
+        "Curse of Sacrifice health buff added",
+      );
+      currentHealthElement.innerText = Math.ceil(
+        gameState.enemy.health,
+      ).toString();
+      barMaxHealthElement.innerText = Math.ceil(
+        gameState.enemy.maxHealth,
+      ).toString();
 
-        // Think it only does a flat amount of damage, no scaling, to added/true magic.
-        let damage: number = 0
+      gameState.enemy.debuff.curseOfSacrifice.timer = new DotTimer(
+        () => {
+          let magicDamageReduction = gameState.enemy.antimagic
+            ? gameState.enemy.magicDamageReduction + 0.25
+            : gameState.enemy.magicDamageReduction;
+          magicDamageReduction = gameState.enemy.debuff.curseOfWeakness.active
+            ? magicDamageReduction - 0.15
+            : magicDamageReduction;
 
-        damage = CURSE_OF_SACRIFICE_BASE_DAMAGE * ((1 - magicDamageReduction) * (1 - attacker.magicPenetration))
+          // Think it only does a flat amount of damage, no scaling, to added/true magic.
+          let damage: number = 0;
 
-        if (attacker.infernalUsery) {
-          if (enemy.perseverance) {
-            damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1) + 1 // + 1 at the end is infernal usery after perseverance.
+          damage =
+            CURSE_OF_SACRIFICE_BASE_DAMAGE *
+            ((1 - magicDamageReduction) *
+              (1 - gameState.attacker.magicPenetration));
+
+          if (gameState.attacker.infernalUsery) {
+            if (gameState.enemy.perseverance) {
+              damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1) + 1; // + 1 at the end is infernal usery after perseverance.
+            } else {
+              damage += 2;
+            }
           } else {
-            damage += 2
+            if (gameState.enemy.perseverance) {
+              damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1); // + 1 at the end is infernal usery after perseverance.
+            }
           }
-        } else {
-          if (enemy.perseverance) {
-            damage += Math.max(damage - PERSEVERANCE_DAMAGE_REDUCTION, 1) // + 1 at the end is infernal usery after perseverance.
+
+          changeHealth(-damage, "Curse of Sacrifice tick");
+        },
+        () => {
+          if (!currentHealthElement || !barMaxHealthElement) {
+            throw Error("UI element not found.");
           }
-        }
-
-        changeHealth(-damage, "Curse of Sacrifice tick")
-      }, 1000)
-
-      enemy.curseOfSacrifice.timeoutId = setTimeout(() => {
-        enemy.curseOfSacrifice.active = false
-        enemy.maxHealth -= CURSE_OF_SACRIFICE_HEALTH_BUFF
-        changeHealth(-CURSE_OF_SACRIFICE_HEALTH_BUFF, "Curse of Sacrifice health buff remove")
-        currentHealthElement.innerText = Math.ceil(enemy.health).toString()
-        barMaxHealthElement.innerText = Math.ceil(enemy.maxHealth).toString()
-        ui.maybePauseTime()
-        clearInterval(enemy.curseOfSacrifice.intervalId)
-        enemy.curseOfSacrifice.intervalId = undefined
-      }, (CURSE_OF_SACRIFICE_DURATION * (1 + enemy.debuffDurationReduction) + 1) * 1000)
-    }
+          gameState.enemy.debuff.curseOfSacrifice.active = false;
+          gameState.enemy.maxHealth -= CURSE_OF_SACRIFICE_HEALTH_BUFF;
+          changeHealth(
+            -CURSE_OF_SACRIFICE_HEALTH_BUFF,
+            "Curse of Sacrifice health buff remove",
+          );
+          currentHealthElement.innerText = Math.ceil(
+            gameState.enemy.health,
+          ).toString();
+          barMaxHealthElement.innerText = Math.ceil(
+            gameState.enemy.maxHealth,
+          ).toString();
+        },
+        1000,
+        CURSE_OF_SACRIFICE_DURATION *
+          (1 + gameState.enemy.debuffDurationReduction) *
+          1000,
+      );
+    },
   },
   darkBolt: {
     direct: () => {
       const { magicDamage, trueDamage } = SPELL.calcDamage({
         baseDamage: DARK_BOLT_BASE_DAMAGE,
         hitLocationBonus: 0,
-        projectile: true
-      })
+        projectile: true,
+      });
 
-      const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage)
+      const damage = SPELL.calcInstanceDamage(magicDamage, trueDamage);
 
-      changeHealth(-damage, "Dark Bolt")
-    }
+      changeHealth(-damage, "Dark Bolt");
+    },
   },
-}
+};
 
 const ui = {
-  updateHealth: (isDead = false) => {
-    currentHealthElement.innerText = Math.ceil(enemy.health).toString()
-    let newWidth: number = enemy.health / enemy.maxHealth * 100
-    healthBarElement.style.setProperty('width', newWidth + "%")
+  updateHealth: () => {
+    if (!currentHealthElement || !healthBarElement) {
+      throw Error("UI element not found.");
+    }
+    currentHealthElement.innerText = Math.ceil(
+      gameState.enemy.health,
+    ).toString();
+    let newWidth: number =
+      (gameState.enemy.health / gameState.enemy.maxHealth) * 100;
+    healthBarElement.style.setProperty("width", newWidth + "%");
   },
   /**
-   * Updates all changing UI elements.
+   * Updates all changing UI elements to reflext current state of the game.
    */
   update: () => {
-    ui.updateHealth()
-    healthInputElement.value = enemy.health.toString()
-    maxHealthInputElement.value = enemy.maxHealth.toString()
-    barMaxHealthElement.innerText = enemy.maxHealth.toString()
-    magicalDamageReductionInputElement.value = (enemy.magicDamageReduction * 100).toString()
-    antimagicInputElement.checked = enemy.antimagic
-    perseveranceInputElement.checked = enemy.perseverance
-    debuffDurationReductionInputElement.value = (enemy.debuffDurationReduction * 100).toString()
-    oneManBandInputElement.checked = enemy.oneManBand.active == true
-    oneManBandMagicalHealingInputElement.value =
-      enemy.oneManBand.magicalHealing !== undefined
-        ? enemy.oneManBand.magicalHealing.toString()
-        : ""
-
-    magicalBaseDamageInputElement.value = attacker.magicalBaseDamage.toString()
-    magicPowerBonusInputElement.value = (attacker.magicPowerBonus * 100).toString()
-    magicPenetrationInputElement.value = (attacker.magicPenetration * 100).toString()
-    additionalMagicDamageInputElement.value = attacker.additionalMagicDamage.toString()
-    trueMagicDamageInputElement.value = attacker.trueMagicDamage.toString()
-    infernalUseryInputElement.checked = attacker.infernalUsery
-  },
-  pauseTime: () => {
-    timeElement.innerText = "Paused"
-  },
-  continueTime: () => {
-    timeElement.innerText = "Going"
-  },
-  /**
-   * Pauses time if target is clear of dots.
-   */
-  maybePauseTime: () => {
-    if (!dotted()) {
-      ui.pauseTime()
+    if (!barMaxHealthElement) {
+      throw Error("UI element not found.");
     }
+    ui.updateHealth();
+    healthInputElement.value = gameState.enemy.health.toString();
+    maxHealthInputElement.value = gameState.enemy.maxHealth.toString();
+    barMaxHealthElement.innerText = gameState.enemy.maxHealth.toString();
+    magicalDamageReductionInputElement.value = (
+      gameState.enemy.magicDamageReduction * 100
+    ).toString();
+    antimagicInputElement.checked = gameState.enemy.antimagic;
+    perseveranceInputElement.checked = gameState.enemy.perseverance;
+    debuffDurationReductionInputElement.value = (
+      gameState.enemy.debuffDurationReduction * 100
+    ).toString();
+    oneManBandInputElement.checked = gameState.enemy.buff.oneManBand.active;
+    oneManBandMagicalHealingInputElement.value =
+      gameState.enemy.buff.oneManBand.magicalHealing !== undefined
+        ? gameState.enemy.buff.oneManBand.magicalHealing.toString()
+        : "";
+    magicalBaseDamageInputElement.value =
+      gameState.attacker.magicalBaseDamage.toString();
+    magicPowerBonusInputElement.value = (
+      gameState.attacker.magicPowerBonus * 100
+    ).toString();
+    magicPenetrationInputElement.value = (
+      gameState.attacker.magicPenetration * 100
+    ).toString();
+    additionalMagicDamageInputElement.value =
+      gameState.attacker.additionalMagicDamage.toString();
+    trueMagicDamageInputElement.value =
+      gameState.attacker.trueMagicDamage.toString();
+    infernalUseryInputElement.checked = gameState.attacker.infernalUsery;
   },
-}
+};
 
 /**
  * Change health, handling when hp goes below 0 or above maxHealth. On death stops healing effects.
  */
 const changeHealth = (d: number, source: string) => {
-  const newHealth = Math.max(Math.min(enemy.health + d, enemy.maxHealth), 0)
-  console.log(`Change health: ${source} ${d}`)
+  const newHealth = Math.max(
+    Math.min(gameState.enemy.health + d, gameState.enemy.maxHealth),
+    0,
+  );
+  console.log(`Change health: ${source} ${d}`);
   if (newHealth > 0) {
-    enemy.health = newHealth
-    ui.updateHealth()
+    gameState.enemy.health = newHealth;
+    ui.updateHealth();
   } else {
-    clearTimeout(enemy.oneManBand.intervalId)
-    enemy.health = newHealth
-    ui.updateHealth(true)
+    if (gameState.enemy.debuff.demonForm.active)
+      gameState.enemy.debuff.demonForm.interval.pause();
+    if (gameState.enemy.buff.oneManBand.active)
+      gameState.enemy.buff.oneManBand.interval.pause();
+    gameState.enemy.health = newHealth;
+    ui.updateHealth();
+    if (gameState.enemy.debuff.demonForm.active)
+      gameState.enemy.debuff.demonForm.interval.stop();
+    if (gameState.enemy.buff.oneManBand.active)
+      gameState.enemy.buff.oneManBand.interval.stop();
+    if (gameState.enemy.debuff.curseOfPain.active)
+      gameState.enemy.debuff.curseOfPain.timer?.stop();
+    if (gameState.enemy.debuff.curseOfSacrifice.active)
+      gameState.enemy.debuff.curseOfSacrifice.timer?.stop();
   }
-}
+};
 
-function init() {
-  initDemon()
-  initOneManBand()
-  ui.update()
-}
-
-enemyPresetElement.addEventListener('change', function() {
-  clearInterval(enemy.curseOfPain.intervalId)
-  clearTimeout(enemy.curseOfPain.timeoutId)
-  clearInterval(enemy.curseOfSacrifice.intervalId)
-  clearTimeout(enemy.curseOfSacrifice.timeoutId)
-  clearTimeout(enemy.demon?.intervalId)
-  clearTimeout(enemy.oneManBand.intervalId)
-
-  ui.pauseTime()
+enemyPresetElement.addEventListener("change", function () {
+  if (gameState.enemy.debuff.demonForm.active)
+    gameState.enemy.debuff.demonForm.interval.pause();
+  if (gameState.enemy.buff.oneManBand.active)
+    gameState.enemy.buff.oneManBand.interval.pause();
+  if (gameState.enemy.debuff.curseOfPain.active)
+    gameState.enemy.debuff.curseOfPain.timer?.pause();
+  if (gameState.enemy.debuff.curseOfSacrifice.active)
+    gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
 
   if (this.value == "demon") {
-    enemy = structuredClone(PRESET.DEMON)
+    gameState.enemy = new Demon();
   } else if (this.value == "ranger") {
-    enemy = structuredClone(PRESET.RANGER)
+    gameState.enemy = new Ranger();
   }
 
-  init()
-})
+  ui.update();
+});
 
-antimagicInputElement.addEventListener('change', function() {
-  enemy.antimagic = this.checked
-})
+antimagicInputElement.addEventListener("change", function () {
+  gameState.enemy.antimagic = this.checked;
+});
 
-perseveranceInputElement.addEventListener('change', function() {
-  enemy.perseverance = this.checked
-})
+perseveranceInputElement.addEventListener("change", function () {
+  gameState.enemy.perseverance = this.checked;
+});
 
-function initDemon() {
-  // TODO: Demon ticks are happening even while time is stopped. Damage is not taken, but gets desynced.
-  if (enemy.demon?.active) {
-    enemy.demon.intervalId = setInterval(() => {
-      const tickDamage = enemy.maxHealth * 0.01 // 1% of health
-
-      if (timeFlow()) {
-        changeHealth(-tickDamage, "Demon degen")
-      }
-    }, 1000)
-  }
-}
-
-function initOneManBand() {
-  enemy.oneManBand.intervalId = setInterval(() => {
-    // Only change health, while One-Man Band is still active.
-    if (enemy.oneManBand.active) {
-      const tickHeal = 1 + enemy.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT
-      if (timeFlow()) {
-        changeHealth(tickHeal, "One-Man Band")
-      }
-    }
-  }, 1000)
-}
-
-healthInputElement.addEventListener('change', function() {
-  const health = parseInt(this.value)
+healthInputElement.addEventListener("change", function () {
+  const health = parseInt(this.value);
   if (!isNaN(health)) {
-    enemy.health = health
+    gameState.enemy.health = health;
   }
-})
+});
 
-maxHealthInputElement.addEventListener('change', function() {
-  const maxHealth = parseInt(this.value)
+maxHealthInputElement.addEventListener("change", function () {
+  const maxHealth = parseInt(this.value);
   if (!isNaN(maxHealth)) {
-    enemy.maxHealth = maxHealth
+    gameState.enemy.maxHealth = maxHealth;
   }
-})
+});
 
-magicalDamageReductionInputElement.addEventListener('change', function() {
-  const magicDamageReduction = parseInt(this.value)
+magicalDamageReductionInputElement.addEventListener("change", function () {
+  const magicDamageReduction = parseInt(this.value);
   if (!isNaN(magicDamageReduction)) {
-    enemy.magicDamageReduction = magicDamageReduction / 100
+    gameState.enemy.magicDamageReduction = magicDamageReduction / 100;
   }
-})
+});
 
-debuffDurationReductionInputElement.addEventListener('change', function() {
-  const debuffDurationReduction = parseInt(this.value)
+debuffDurationReductionInputElement.addEventListener("change", function () {
+  const debuffDurationReduction = parseInt(this.value);
   if (!isNaN(debuffDurationReduction)) {
-    enemy.debuffDurationReduction = debuffDurationReduction / 100
+    gameState.enemy.debuffDurationReduction = debuffDurationReduction / 100;
   }
-})
+});
 
-oneManBandInputElement.addEventListener('change', function() {
-  // Toggle One-Man Band logic
+oneManBandInputElement.addEventListener("change", function () {
   if (this.checked) {
-    enemy.oneManBand.active = true
-
-    initOneManBand()
+    gameState.enemy.buff.oneManBand.active = true;
+    gameState.enemy.buff.oneManBand.interval =
+      gameState.enemy.initOneManBandInterval();
+    if (gameState.play) {
+      gameState.enemy.buff.oneManBand.interval.play();
+    }
   } else {
-    enemy.oneManBand.active = false
-    clearInterval(enemy.oneManBand.intervalId)
+    gameState.enemy.buff.oneManBand.interval.stop();
   }
-})
+});
 
-oneManBandMagicalHealingInputElement.addEventListener('change', function() {
-  if (enemy.oneManBand) {
-    const magicalHealing = parseInt(this.value)
+oneManBandMagicalHealingInputElement.addEventListener("change", function () {
+  if (gameState.enemy.buff.oneManBand.active) {
+    const magicalHealing = parseInt(this.value);
     // Validate that input is a number.
     if (!isNaN(magicalHealing)) {
-      enemy.oneManBand.magicalHealing = magicalHealing
-      console.log("Set magical healing to", magicalHealing)
+      gameState.enemy.buff.oneManBand.magicalHealing = magicalHealing;
+      console.log("Set magical healing to", magicalHealing);
     }
   }
-})
+});
 
-magicalBaseDamageInputElement.addEventListener('change', function() {
-  const magicalBaseDamage = parseInt(this.value)
+magicalBaseDamageInputElement.addEventListener("change", function () {
+  const magicalBaseDamage = parseInt(this.value);
   if (!isNaN(magicalBaseDamage)) {
-    attacker.magicalBaseDamage = magicalBaseDamage
+    gameState.attacker.magicalBaseDamage = magicalBaseDamage;
   }
-})
+});
 
-magicPowerBonusInputElement.addEventListener('change', function() {
-  const magicPowerBonus = parseInt(this.value)
+magicPowerBonusInputElement.addEventListener("change", function () {
+  const magicPowerBonus = parseInt(this.value);
   if (!isNaN(magicPowerBonus)) {
-    attacker.magicPowerBonus = magicPowerBonus / 100
+    gameState.attacker.magicPowerBonus = magicPowerBonus / 100;
   }
-})
+});
 
-magicPenetrationInputElement.addEventListener('change', function() {
-  const magicPenetration = parseInt(this.value)
+magicPenetrationInputElement.addEventListener("change", function () {
+  const magicPenetration = parseInt(this.value);
   if (!isNaN(magicPenetration)) {
-    attacker.magicPenetration = magicPenetration / 100
+    gameState.attacker.magicPenetration = magicPenetration / 100;
   }
-})
+});
 
-additionalMagicDamageInputElement.addEventListener('change', function() {
-  const additionalMagicDamage = parseInt(this.value)
+additionalMagicDamageInputElement.addEventListener("change", function () {
+  const additionalMagicDamage = parseInt(this.value);
   if (!isNaN(additionalMagicDamage)) {
-    attacker.additionalMagicDamage = additionalMagicDamage
+    gameState.attacker.additionalMagicDamage = additionalMagicDamage;
   }
-})
+});
 
-trueMagicDamageInputElement.addEventListener('change', function() {
-  const trueMagicDamage = parseInt(this.value)
+trueMagicDamageInputElement.addEventListener("change", function () {
+  const trueMagicDamage = parseInt(this.value);
   if (!isNaN(trueMagicDamage)) {
-    attacker.trueMagicDamage = trueMagicDamage
+    gameState.attacker.trueMagicDamage = trueMagicDamage;
   }
-})
+});
 
-infernalUseryInputElement.addEventListener('change', function() {
-  attacker.infernalUsery = this.checked
-})
+infernalUseryInputElement.addEventListener("change", function () {
+  gameState.attacker.infernalUsery = this.checked;
+});
 
-/**
- * `Attacker` curses the `Enemy` and causes instant and periodic damage for 5 seconds. 
- */
-const attack = (spell: Function) => {
-  spell()
-}
-
-const attackButton = document.getElementById('attack') as HTMLButtonElement
-attackButton.onclick = () => attack(() => {
+attackButton.onclick = () => {
   if (attackTypeSelectElement.value == "curse-of-pain") {
-    return SPELL.curseOfPain.direct()
+    SPELL.curseOfPain.direct();
+    if (gameState.play) {
+      gameState.enemy.debuff.curseOfPain.timer?.play();
+    }
   } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
-    return SPELL.curseOfSacrifice.dot()
+    SPELL.curseOfSacrifice.dot();
+    if (gameState.play) {
+      gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+    }
   } else if (attackTypeSelectElement.value == "dark-bolt") {
-    return SPELL.darkBolt.direct()
+    return SPELL.darkBolt.direct();
   }
-})
+};
 
-init()
+resumeButton.onclick = () => {
+  gameState.play = true;
+  if (gameState.enemy.debuff.demonForm.active)
+    gameState.enemy.debuff.demonForm.interval.play();
+  if (gameState.enemy.buff.oneManBand.active)
+    gameState.enemy.buff.oneManBand.interval.play();
+  if (gameState.enemy.debuff.curseOfPain.active)
+    gameState.enemy.debuff.curseOfPain.timer?.play();
+  if (gameState.enemy.debuff.curseOfSacrifice.active)
+    gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+};
+
+pauseButton.onclick = () => {
+  gameState.play = false;
+  if (gameState.enemy.debuff.demonForm.active)
+    gameState.enemy.debuff.demonForm.interval.pause();
+  if (gameState.enemy.buff.oneManBand.active)
+    gameState.enemy.buff.oneManBand.interval.pause();
+  if (gameState.enemy.debuff.curseOfPain.active)
+    gameState.enemy.debuff.curseOfPain.timer?.pause();
+  if (gameState.enemy.debuff.curseOfSacrifice.active)
+    gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
+};
+
+const gameState = new GameState();
+ui.update();

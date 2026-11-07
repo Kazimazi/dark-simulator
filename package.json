@@ -1,10 +1,13 @@
 {
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "serve": "^14.2.6",
     "typescript": "^7.0.2"
   },
   "scripts": {
     "build": "tsc && cp ./src/index.html ./dist/ && cp ./src/style.css ./dist/",
+    "test": "node --test",
     "watch": "tsc --watch"
-  }
+  },
+  "type": "module"
 }
