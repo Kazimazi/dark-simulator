@@ -34,6 +34,7 @@ import {
   resumeButton,
   pauseButton,
   resetButton,
+  demonFormInputElement,
 } from "./selectors.js";
 import { Interval, DotTimer } from "./utils.js";
 
@@ -418,6 +419,7 @@ const ui = {
       gameState.enemy.buff.oneManBand.magicalHealing !== undefined
         ? gameState.enemy.buff.oneManBand.magicalHealing.toString()
         : "";
+    demonFormInputElement.checked = gameState.enemy.debuff.demonForm.active;
     magicalBaseDamageInputElement.value =
       gameState.attacker.magicalBaseDamage.toString();
     magicPowerBonusInputElement.value = (
@@ -540,6 +542,19 @@ oneManBandMagicalHealingInputElement.addEventListener("change", function () {
       gameState.enemy.buff.oneManBand.magicalHealing = magicalHealing;
       console.log("Set magical healing to", magicalHealing);
     }
+  }
+});
+
+demonFormInputElement.addEventListener("change", function () {
+  if (this.checked) {
+    gameState.enemy.debuff.demonForm.active = true;
+    gameState.enemy.debuff.demonForm.interval =
+      gameState.enemy.initDemonFormInterval();
+    if (gameState.play) {
+      gameState.enemy.debuff.demonForm.interval.play();
+    }
+  } else {
+    gameState.enemy.debuff.demonForm.interval.stop();
   }
 });
 

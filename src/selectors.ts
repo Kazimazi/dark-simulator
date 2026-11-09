@@ -24,6 +24,9 @@ export let oneManBandInputElement = document.getElementById(
 export let oneManBandMagicalHealingInputElement = document.getElementById(
   "one-man-band-magical-healing",
 ) as HTMLInputElement;
+export let demonFormInputElement = document.getElementById(
+  "demon-form",
+) as HTMLInputElement;
 
 // Elements under attacker header.
 export let magicalBaseDamageInputElement = document.getElementById(
