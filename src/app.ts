@@ -35,6 +35,7 @@ import {
   pauseButton,
   resetButton,
   demonFormInputElement,
+  curseOfWeaknessInputElement,
 } from "./selectors.js";
 import { Interval, DotTimer } from "./utils.js";
 
@@ -420,6 +421,8 @@ const ui = {
         ? gameState.enemy.buff.oneManBand.magicalHealing.toString()
         : "";
     demonFormInputElement.checked = gameState.enemy.debuff.demonForm.active;
+    curseOfWeaknessInputElement.checked =
+      gameState.enemy.debuff.curseOfWeakness.active;
     magicalBaseDamageInputElement.value =
       gameState.attacker.magicalBaseDamage.toString();
     magicPowerBonusInputElement.value = (
@@ -555,6 +558,14 @@ demonFormInputElement.addEventListener("change", function () {
     }
   } else {
     gameState.enemy.debuff.demonForm.interval.stop();
+  }
+});
+
+curseOfWeaknessInputElement.addEventListener("change", function () {
+  if (this.checked) {
+    gameState.enemy.debuff.curseOfWeakness.active = true;
+  } else {
+    gameState.enemy.debuff.curseOfWeakness.active = false;
   }
 });
 
