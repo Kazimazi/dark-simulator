@@ -130,7 +130,7 @@ class Enemy {
 
   initOneManBandInterval() {
     return new Interval(() => {
-      if (this.buff.oneManBand?.magicalHealing) {
+      if (this.buff.oneManBand.magicalHealing !== undefined) {
         const tickHeal =
           1 +
           this.buff.oneManBand.magicalHealing * ONE_MAN_BAND_HEAL_COEFFICIENT;
