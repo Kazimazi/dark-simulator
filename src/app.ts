@@ -384,8 +384,199 @@ const SPELL = {
   },
 };
 
-const ui = {
-  updateHealth: () => {
+class Ui {
+  constructor() {
+    enemyPresetElement.addEventListener("change", function () {
+      if (gameState.enemy.debuff.demonForm.active)
+        gameState.enemy.debuff.demonForm.interval.pause();
+      if (gameState.enemy.buff.oneManBand.active)
+        gameState.enemy.buff.oneManBand.interval.pause();
+      if (gameState.enemy.debuff.curseOfPain.active)
+        gameState.enemy.debuff.curseOfPain.timer?.pause();
+      if (gameState.enemy.debuff.curseOfSacrifice.active)
+        gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
+
+      if (this.value == "demon") {
+        gameState.enemy = new Demon();
+      } else if (this.value == "ranger") {
+        gameState.enemy = new Ranger();
+      }
+
+      ui.update();
+    });
+
+    antimagicInputElement.addEventListener("change", function () {
+      gameState.enemy.antimagic = this.checked;
+    });
+
+    perseveranceInputElement.addEventListener("change", function () {
+      gameState.enemy.perseverance = this.checked;
+    });
+
+    healthInputElement.addEventListener("change", function () {
+      const health = parseInt(this.value);
+      if (!isNaN(health)) {
+        gameState.enemy.health = health;
+      }
+    });
+
+    maxHealthInputElement.addEventListener("change", function () {
+      const maxHealth = parseInt(this.value);
+      if (!isNaN(maxHealth)) {
+        gameState.enemy.maxHealth = maxHealth;
+      }
+    });
+
+    magicalDamageReductionInputElement.addEventListener("change", function () {
+      const magicDamageReduction = parseInt(this.value);
+      if (!isNaN(magicDamageReduction)) {
+        gameState.enemy.magicDamageReduction = magicDamageReduction / 100;
+      }
+    });
+
+    debuffDurationReductionInputElement.addEventListener("change", function () {
+      const debuffDurationReduction = parseInt(this.value);
+      if (!isNaN(debuffDurationReduction)) {
+        gameState.enemy.debuffDurationReduction = debuffDurationReduction / 100;
+      }
+    });
+
+    oneManBandInputElement.addEventListener("change", function () {
+      if (this.checked) {
+        gameState.enemy.buff.oneManBand.active = true;
+        gameState.enemy.buff.oneManBand.interval =
+          gameState.enemy.initOneManBandInterval();
+        if (gameState.play) {
+          gameState.enemy.buff.oneManBand.interval.play();
+        }
+      } else {
+        gameState.enemy.buff.oneManBand.interval.stop();
+      }
+    });
+
+    oneManBandMagicalHealingInputElement.addEventListener(
+      "change",
+      function () {
+        if (gameState.enemy.buff.oneManBand.active) {
+          const magicalHealing = parseInt(this.value);
+          // Validate that input is a number.
+          if (!isNaN(magicalHealing)) {
+            gameState.enemy.buff.oneManBand.magicalHealing = magicalHealing;
+            console.log("Set magical healing to", magicalHealing);
+          }
+        }
+      },
+    );
+
+    demonFormInputElement.addEventListener("change", function () {
+      if (this.checked) {
+        gameState.enemy.debuff.demonForm.active = true;
+        gameState.enemy.debuff.demonForm.interval =
+          gameState.enemy.initDemonFormInterval();
+        if (gameState.play) {
+          gameState.enemy.debuff.demonForm.interval.play();
+        }
+      } else {
+        gameState.enemy.debuff.demonForm.interval.stop();
+      }
+    });
+
+    curseOfWeaknessInputElement.addEventListener("change", function () {
+      if (this.checked) {
+        gameState.enemy.debuff.curseOfWeakness.active = true;
+      } else {
+        gameState.enemy.debuff.curseOfWeakness.active = false;
+      }
+    });
+
+    magicalBaseDamageInputElement.addEventListener("change", function () {
+      const magicalBaseDamage = parseInt(this.value);
+      if (!isNaN(magicalBaseDamage)) {
+        gameState.attacker.magicalBaseDamage = magicalBaseDamage;
+      }
+    });
+
+    magicPowerBonusInputElement.addEventListener("change", function () {
+      const magicPowerBonus = parseInt(this.value);
+      if (!isNaN(magicPowerBonus)) {
+        gameState.attacker.magicPowerBonus = magicPowerBonus / 100;
+      }
+    });
+
+    magicPenetrationInputElement.addEventListener("change", function () {
+      const magicPenetration = parseInt(this.value);
+      if (!isNaN(magicPenetration)) {
+        gameState.attacker.magicPenetration = magicPenetration / 100;
+      }
+    });
+
+    additionalMagicDamageInputElement.addEventListener("change", function () {
+      const additionalMagicDamage = parseInt(this.value);
+      if (!isNaN(additionalMagicDamage)) {
+        gameState.attacker.additionalMagicDamage = additionalMagicDamage;
+      }
+    });
+
+    trueMagicDamageInputElement.addEventListener("change", function () {
+      const trueMagicDamage = parseInt(this.value);
+      if (!isNaN(trueMagicDamage)) {
+        gameState.attacker.trueMagicDamage = trueMagicDamage;
+      }
+    });
+
+    infernalUseryInputElement.addEventListener("change", function () {
+      gameState.attacker.infernalUsery = this.checked;
+    });
+
+    attackButton.onclick = () => {
+      if (attackTypeSelectElement.value == "curse-of-pain") {
+        SPELL.curseOfPain.direct();
+        if (gameState.play) {
+          gameState.enemy.debuff.curseOfPain.timer?.play();
+        }
+      } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
+        SPELL.curseOfSacrifice.dot();
+        if (gameState.play) {
+          gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+        }
+      } else if (attackTypeSelectElement.value == "dark-bolt") {
+        return SPELL.darkBolt.direct();
+      }
+    };
+
+    resumeButton.onclick = () => {
+      gameState.play = true;
+      if (gameState.enemy.debuff.demonForm.active)
+        gameState.enemy.debuff.demonForm.interval.play();
+      if (gameState.enemy.buff.oneManBand.active)
+        gameState.enemy.buff.oneManBand.interval.play();
+      if (gameState.enemy.debuff.curseOfPain.active)
+        gameState.enemy.debuff.curseOfPain.timer?.play();
+      if (gameState.enemy.debuff.curseOfSacrifice.active)
+        gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+    };
+
+    pauseButton.onclick = () => {
+      gameState.play = false;
+      if (gameState.enemy.debuff.demonForm.active)
+        gameState.enemy.debuff.demonForm.interval.pause();
+      if (gameState.enemy.buff.oneManBand.active)
+        gameState.enemy.buff.oneManBand.interval.pause();
+      if (gameState.enemy.debuff.curseOfPain.active)
+        gameState.enemy.debuff.curseOfPain.timer?.pause();
+      if (gameState.enemy.debuff.curseOfSacrifice.active)
+        gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
+    };
+
+    resetButton.onclick = () => {
+      gameState = new GameState();
+      ui.update();
+    };
+
+    this.update();
+  }
+
+  updateHealth() {
     if (!currentHealthElement || !healthBarElement) {
       throw Error("UI element not found.");
     }
@@ -395,15 +586,13 @@ const ui = {
     let newWidth: number =
       (gameState.enemy.health / gameState.enemy.maxHealth) * 100;
     healthBarElement.style.setProperty("width", newWidth + "%");
-  },
-  /**
-   * Updates all changing UI elements to reflext current state of the game.
-   */
-  update: () => {
+  }
+
+  update() {
     if (!barMaxHealthElement) {
       throw Error("UI element not found.");
     }
-    ui.updateHealth();
+    this.updateHealth();
     healthInputElement.value = gameState.enemy.health.toString();
     maxHealthInputElement.value = gameState.enemy.maxHealth.toString();
     barMaxHealthElement.innerText = gameState.enemy.maxHealth.toString();
@@ -436,8 +625,8 @@ const ui = {
     trueMagicDamageInputElement.value =
       gameState.attacker.trueMagicDamage.toString();
     infernalUseryInputElement.checked = gameState.attacker.infernalUsery;
-  },
-};
+  }
+}
 
 /**
  * Change health, handling when hp goes below 0 or above maxHealth. On death stops healing effects.
@@ -469,189 +658,6 @@ const changeHealth = (d: number, source: string) => {
   }
 };
 
-enemyPresetElement.addEventListener("change", function () {
-  if (gameState.enemy.debuff.demonForm.active)
-    gameState.enemy.debuff.demonForm.interval.pause();
-  if (gameState.enemy.buff.oneManBand.active)
-    gameState.enemy.buff.oneManBand.interval.pause();
-  if (gameState.enemy.debuff.curseOfPain.active)
-    gameState.enemy.debuff.curseOfPain.timer?.pause();
-  if (gameState.enemy.debuff.curseOfSacrifice.active)
-    gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
-
-  if (this.value == "demon") {
-    gameState.enemy = new Demon();
-  } else if (this.value == "ranger") {
-    gameState.enemy = new Ranger();
-  }
-
-  ui.update();
-});
-
-antimagicInputElement.addEventListener("change", function () {
-  gameState.enemy.antimagic = this.checked;
-});
-
-perseveranceInputElement.addEventListener("change", function () {
-  gameState.enemy.perseverance = this.checked;
-});
-
-healthInputElement.addEventListener("change", function () {
-  const health = parseInt(this.value);
-  if (!isNaN(health)) {
-    gameState.enemy.health = health;
-  }
-});
-
-maxHealthInputElement.addEventListener("change", function () {
-  const maxHealth = parseInt(this.value);
-  if (!isNaN(maxHealth)) {
-    gameState.enemy.maxHealth = maxHealth;
-  }
-});
-
-magicalDamageReductionInputElement.addEventListener("change", function () {
-  const magicDamageReduction = parseInt(this.value);
-  if (!isNaN(magicDamageReduction)) {
-    gameState.enemy.magicDamageReduction = magicDamageReduction / 100;
-  }
-});
-
-debuffDurationReductionInputElement.addEventListener("change", function () {
-  const debuffDurationReduction = parseInt(this.value);
-  if (!isNaN(debuffDurationReduction)) {
-    gameState.enemy.debuffDurationReduction = debuffDurationReduction / 100;
-  }
-});
-
-oneManBandInputElement.addEventListener("change", function () {
-  if (this.checked) {
-    gameState.enemy.buff.oneManBand.active = true;
-    gameState.enemy.buff.oneManBand.interval =
-      gameState.enemy.initOneManBandInterval();
-    if (gameState.play) {
-      gameState.enemy.buff.oneManBand.interval.play();
-    }
-  } else {
-    gameState.enemy.buff.oneManBand.interval.stop();
-  }
-});
-
-oneManBandMagicalHealingInputElement.addEventListener("change", function () {
-  if (gameState.enemy.buff.oneManBand.active) {
-    const magicalHealing = parseInt(this.value);
-    // Validate that input is a number.
-    if (!isNaN(magicalHealing)) {
-      gameState.enemy.buff.oneManBand.magicalHealing = magicalHealing;
-      console.log("Set magical healing to", magicalHealing);
-    }
-  }
-});
-
-demonFormInputElement.addEventListener("change", function () {
-  if (this.checked) {
-    gameState.enemy.debuff.demonForm.active = true;
-    gameState.enemy.debuff.demonForm.interval =
-      gameState.enemy.initDemonFormInterval();
-    if (gameState.play) {
-      gameState.enemy.debuff.demonForm.interval.play();
-    }
-  } else {
-    gameState.enemy.debuff.demonForm.interval.stop();
-  }
-});
-
-curseOfWeaknessInputElement.addEventListener("change", function () {
-  if (this.checked) {
-    gameState.enemy.debuff.curseOfWeakness.active = true;
-  } else {
-    gameState.enemy.debuff.curseOfWeakness.active = false;
-  }
-});
-
-magicalBaseDamageInputElement.addEventListener("change", function () {
-  const magicalBaseDamage = parseInt(this.value);
-  if (!isNaN(magicalBaseDamage)) {
-    gameState.attacker.magicalBaseDamage = magicalBaseDamage;
-  }
-});
-
-magicPowerBonusInputElement.addEventListener("change", function () {
-  const magicPowerBonus = parseInt(this.value);
-  if (!isNaN(magicPowerBonus)) {
-    gameState.attacker.magicPowerBonus = magicPowerBonus / 100;
-  }
-});
-
-magicPenetrationInputElement.addEventListener("change", function () {
-  const magicPenetration = parseInt(this.value);
-  if (!isNaN(magicPenetration)) {
-    gameState.attacker.magicPenetration = magicPenetration / 100;
-  }
-});
-
-additionalMagicDamageInputElement.addEventListener("change", function () {
-  const additionalMagicDamage = parseInt(this.value);
-  if (!isNaN(additionalMagicDamage)) {
-    gameState.attacker.additionalMagicDamage = additionalMagicDamage;
-  }
-});
-
-trueMagicDamageInputElement.addEventListener("change", function () {
-  const trueMagicDamage = parseInt(this.value);
-  if (!isNaN(trueMagicDamage)) {
-    gameState.attacker.trueMagicDamage = trueMagicDamage;
-  }
-});
-
-infernalUseryInputElement.addEventListener("change", function () {
-  gameState.attacker.infernalUsery = this.checked;
-});
-
-attackButton.onclick = () => {
-  if (attackTypeSelectElement.value == "curse-of-pain") {
-    SPELL.curseOfPain.direct();
-    if (gameState.play) {
-      gameState.enemy.debuff.curseOfPain.timer?.play();
-    }
-  } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
-    SPELL.curseOfSacrifice.dot();
-    if (gameState.play) {
-      gameState.enemy.debuff.curseOfSacrifice.timer?.play();
-    }
-  } else if (attackTypeSelectElement.value == "dark-bolt") {
-    return SPELL.darkBolt.direct();
-  }
-};
-
-resumeButton.onclick = () => {
-  gameState.play = true;
-  if (gameState.enemy.debuff.demonForm.active)
-    gameState.enemy.debuff.demonForm.interval.play();
-  if (gameState.enemy.buff.oneManBand.active)
-    gameState.enemy.buff.oneManBand.interval.play();
-  if (gameState.enemy.debuff.curseOfPain.active)
-    gameState.enemy.debuff.curseOfPain.timer?.play();
-  if (gameState.enemy.debuff.curseOfSacrifice.active)
-    gameState.enemy.debuff.curseOfSacrifice.timer?.play();
-};
-
-pauseButton.onclick = () => {
-  gameState.play = false;
-  if (gameState.enemy.debuff.demonForm.active)
-    gameState.enemy.debuff.demonForm.interval.pause();
-  if (gameState.enemy.buff.oneManBand.active)
-    gameState.enemy.buff.oneManBand.interval.pause();
-  if (gameState.enemy.debuff.curseOfPain.active)
-    gameState.enemy.debuff.curseOfPain.timer?.pause();
-  if (gameState.enemy.debuff.curseOfSacrifice.active)
-    gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
-};
-
-resetButton.onclick = () => {
-  gameState = new GameState();
-  ui.update();
-};
-
 let gameState = new GameState();
+const ui = new Ui();
 ui.update();
