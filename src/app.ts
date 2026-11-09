@@ -33,6 +33,7 @@ import {
   attackButton,
   resumeButton,
   pauseButton,
+  resetButton,
 } from "./selectors.js";
 import { Interval, DotTimer } from "./utils.js";
 
@@ -621,5 +622,10 @@ pauseButton.onclick = () => {
     gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
 };
 
-const gameState = new GameState();
+resetButton.onclick = () => {
+  gameState = new GameState();
+  ui.update();
+};
+
+let gameState = new GameState();
 ui.update();
