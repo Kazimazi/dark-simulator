@@ -1,3 +1,10 @@
+enum State {
+  Initial,
+  Running,
+  Paused,
+  Done,
+}
+
 /**
  * Custom pauseable and resumable interval.
  */
@@ -28,9 +35,8 @@ export class Interval {
   private timeoutId?: number | null;
   /**
    * State of the timer.
-   * TODO: Use enums.
    */
-  private state: "initial" | "paused" | "running" | "done" = "initial";
+  private state: State = State.Initial;
 
   constructor(callback: Function, delay: number) {
     this.callback = callback;
@@ -39,22 +45,22 @@ export class Interval {
   }
 
   private startInterval() {
-    this.intervalId = window.setInterval(() => {
+    this.intervalId = setInterval(() => {
       this.callback();
       this.remaining = this.delay;
     }, this.delay);
   }
 
   play() {
-    if (this.state == "running" || this.state == "done") return;
+    if (this.state == State.Running || this.state == State.Done) return;
     this.start = Date.now();
-    if (this.state == "initial") {
-      this.state = "running";
+    if (this.state == State.Initial) {
+      this.state = State.Running;
       this.start = Date.now();
       this.startInterval();
     } else {
-      this.state = "running";
-      this.timeoutId = window.setTimeout(() => {
+      this.state = State.Running;
+      this.timeoutId = setTimeout(() => {
         this.intervalId = null;
         this.callback();
         this.start = Date.now();
@@ -64,14 +70,14 @@ export class Interval {
   }
 
   pause() {
-    if (this.state != "running") return;
+    if (this.state != State.Running) return;
     if (!this.start)
       throw Error("Start time of interval should have been defined.");
-    this.state = "paused";
+    this.state = State.Paused;
     this.remaining = this.delay - ((Date.now() - this.start) % this.delay);
     this.start = null;
     if (this.intervalId) {
-      window.clearInterval(this.intervalId);
+      clearInterval(this.intervalId);
       this.intervalId = null;
     }
     if (this.timeoutId) {
@@ -81,10 +87,10 @@ export class Interval {
   }
 
   stop() {
-    if (this.state == "done") return;
-    this.state = "done";
+    if (this.state == State.Done) return;
+    this.state = State.Done;
     if (this.intervalId) {
-      window.clearInterval(this.intervalId);
+      clearInterval(this.intervalId);
       this.intervalId = null;
     }
   }
@@ -113,14 +119,11 @@ export class DotTimer {
    */
   private remaining: number;
   /**
-   * Last timeout that happens after last tick.
-   *
-   * Example #1: if DoT is 4s long, it ticks 4 times and the last timeout delay is 0.
-   * Example #2: if DoT is 4.5s long, it ticks 4 times and the last timeout delay is 500ms.
+   * Remaining time after the last tick. When `DotTimer.duration` is divisible by `DotTimer.dealy`, this will be 0.
    */
-  private readonly lastTimeout: number;
+  private readonly lastRemaining: number;
   /**
-   * Track start date.
+   * Track time of last resume.
    */
   private start?: number | null;
   /**
@@ -137,9 +140,8 @@ export class DotTimer {
   private timeoutId?: number | null;
   /**
    * State of the timer.
-   * TODO: Use enums.
    */
-  private state: "initial" | "paused" | "running" | "done" = "initial";
+  private state: State = State.Initial;
 
   constructor(
     callback: Function,
@@ -151,70 +153,90 @@ export class DotTimer {
     this.endCallback = endCallback;
     this.delay = delay;
     this.remaining = delay;
-    this.lastTimeout = duration % delay;
     this.remainingTicks = Math.floor(duration / delay);
+    this.lastRemaining = duration % delay;
+  }
+
+  private tick() {
+    this.callback();
+    this.remainingTicks -= 1;
+    this.start = Date.now();
+    this.remaining = this.remainingTicks > 0 ? this.delay : this.lastRemaining;
+  }
+
+  private startLastTimeout() {
+    this.cleanTimers();
+    this.timeoutId = setTimeout(() => {
+      this.stop();
+    }, this.remaining);
   }
 
   private startInterval() {
-    this.intervalId = window.setInterval(() => {
-      this.remainingTicks -= 1;
-      this.callback();
-      this.remaining = this.delay;
+    this.intervalId = setInterval(() => {
+      if (this.remainingTicks > 0) {
+        this.tick();
+      }
       if (this.remainingTicks <= 0) {
-        this.timeoutId = window.setTimeout(() => {
-          if (this.intervalId) {
-            window.clearInterval(this.intervalId);
-            this.intervalId = null;
-          }
-          this.stop();
-        }, this.lastTimeout);
+        // No more ticks remaining, finish last timeout.
+        this.startLastTimeout();
       }
     }, this.delay);
   }
 
   play() {
-    if (this.state == "running" || this.state == "done") return;
+    if (this.state == State.Running || this.state == State.Done) return;
+    const state = this.state;
+    this.state = State.Running;
     this.start = Date.now();
-
-    if (this.state == "initial") {
+    if (state == State.Initial) {
       this.startInterval();
+    } else if (this.remainingTicks <= 0) {
+      this.startLastTimeout();
     } else {
-      this.timeoutId = window.setTimeout(() => {
-        this.intervalId = null;
-        this.callback();
-        this.startInterval();
+      // Case of when timer was paused before, but this is not last timeout.
+      this.timeoutId = setTimeout(() => {
+        this.timeoutId = null;
+        this.tick();
+        if (this.remainingTicks > 0) {
+          this.startInterval();
+        } else {
+          this.startLastTimeout();
+        }
       }, this.remaining);
     }
   }
 
-  pause() {
-    if (this.state != "running") return;
-    if (!this.start)
-      throw Error("Start time of interval should have been defined.");
-    this.state = "paused";
-    this.remaining = this.delay - (Date.now() - this.start);
-    this.start = null;
+  // Stops all tracked timers.
+  private cleanTimers() {
     if (this.intervalId) {
-      window.clearInterval(this.intervalId);
+      clearInterval(this.intervalId);
       this.intervalId = null;
     }
     if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
+      clearInterval(this.timeoutId);
       this.timeoutId = null;
     }
   }
 
+  pause() {
+    if (this.state != State.Running) return;
+    if (!this.start)
+      throw Error("Start time of interval should have been defined.");
+    this.state = State.Paused;
+    this.cleanTimers();
+    {
+      const diff = Date.now() - this.start;
+      console.log(
+        `PAUSE: new_rem(${this.remaining - diff}) = rem(${this.remaining}) - diff(${diff})`,
+      );
+      this.remaining -= diff;
+    }
+  }
+
   stop() {
-    if (this.state == "done") return;
-    this.state = "done";
-    if (this.intervalId) {
-      window.clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
+    if (this.state == State.Done) return;
+    this.state = State.Done;
+    this.cleanTimers();
     this.endCallback();
   }
 }
