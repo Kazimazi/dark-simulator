@@ -3,9 +3,6 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "module": "esnext",
-    "types": [
-      "node"
-    ],
 
     // Other Outputs
     "sourceMap": true,
