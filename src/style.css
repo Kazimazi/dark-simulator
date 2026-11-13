@@ -8,12 +8,11 @@ html {
 
 body {
   margin: 0;
-  background-color: #C7BFBF;
+  background-color: #c7bfbf;
   height: 100%;
   width: 100%;
   position: absolute;
 }
-
 
 /* Dark theme */
 @media (prefers-color-scheme: dark) {
@@ -29,7 +28,7 @@ header {
 
 section {
   margin: 20px auto;
-  max-width: 900px
+  max-width: 900px;
 }
 
 footer {
@@ -46,7 +45,7 @@ h2 {
   gap: 24px;
 }
 
-#parameters>div {
+#parameters > div {
   flex-basis: 50%;
 }
 
@@ -88,7 +87,7 @@ h2 {
   position: relative;
 }
 
-.percent-container>input {
+.percent-container > input {
   box-sizing: border-box;
   width: 100%;
 }
@@ -97,7 +96,7 @@ h2 {
   position: absolute;
   top: 3px;
   right: 0.5em;
-  content: '%';
+  content: "%";
   font-size: 13px;
   color: gray;
 }
