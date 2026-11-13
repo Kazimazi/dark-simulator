@@ -100,3 +100,18 @@ h2 {
   font-size: 13px;
   color: gray;
 }
+
+.legacy {
+  color: gray;
+}
+
+.mat-icon-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mat-icon {
+  font-size: 16px !important;
+  cursor: pointer;
+}

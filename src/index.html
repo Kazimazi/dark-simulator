@@ -5,6 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Darksim</title>
 		<link href="style.css" rel="stylesheet">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=info">
 	</head>
 
 	<body>
@@ -46,8 +47,13 @@
 							<input type="text" id="debuff-duration-reduction" value="" autocomplete="off">
 						</div>
 
-						<label for="one-man-band">One-Man Band</label>
-						<div><input type="checkbox" id="one-man-band" name="one-man-band"></div>
+						<label for="one-man-band" class="legacy">One-Man Band Healing</label>
+						<div class="mat-icon-container">
+							<input type="checkbox" id="one-man-band" name="one-man-band">
+							<span title="Removed in patch #132" class="material-symbols-outlined mat-icon">
+								info
+							</span>
+						</div>
 
 						<label for="one-man-band-magical-healing">Magical Healing</label>
 						<input type="text" id="one-man-band-magical-healing" name="one-man-band-magical-healing" value="" autocomplete="off">
