@@ -99,16 +99,10 @@
 
 			<br>
 
-			<div>
-				<select id="attack-type" autocomplete="off">
-					<option value="curse-of-pain">Curse of Pain</option>
-					<option value="curse-of-sacrifice">Curse of Sacrifice</option>
-					<option value="dark-bolt">Dark Bolt (body)</option>
-				</select>
-				<button id="attack">Attack</button>
-				<button id="resume">Resume</button>
-				<button id="pause">Pause</button>
-				<button id="reset">Reset</button>
+			<div id="spells">
+				<img id="curse-of-pain-button" src="../assets/96px-Spell_Curse_of_Pain.png" alt="Curse of Pain button">
+				<img id="curse-of-sacrifice-button" src="../assets/96px-Spell_Power_of_Sacrifice.png" alt="Curse of Sacrifice button">
+				<img id="bolt-of-darkness-button" src="../assets/96px-Spell_Bolt_of_Darkness.png" alt="Bolt of Darkness button">
 			</div>
 
 			<br>
@@ -121,6 +115,14 @@
 						/ <span id="bar-max-health"></span>
 					</div>
 				</div>
+			</div>
+
+			<br>
+
+			<div id="control-buttons">
+				<button id="resume">Resume</button>
+				<button id="pause">Pause</button>
+				<button id="reset">Reset</button>
 			</div>
 
 			<script type="module" src="./app.js"></script>

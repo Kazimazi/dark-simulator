@@ -14,7 +14,6 @@ import {
   enemyPresetElement,
   healthInputElement,
   maxHealthInputElement,
-  attackTypeSelectElement,
   currentHealthElement,
   barMaxHealthElement,
   magicalDamageReductionInputElement,
@@ -30,12 +29,14 @@ import {
   additionalMagicDamageInputElement,
   trueMagicDamageInputElement,
   infernalUseryInputElement,
-  attackButton,
   resumeButton,
   pauseButton,
   resetButton,
   demonFormInputElement,
   curseOfWeaknessInputElement,
+  curseOfPainImage,
+  curseOfSacrificeImage,
+  boltOfDarknessImage,
 } from "./selectors.js";
 import { Interval, DotTimer } from "./utils.js";
 
@@ -528,22 +529,6 @@ class Ui {
       gameState.attacker.infernalUsery = this.checked;
     });
 
-    attackButton.onclick = () => {
-      if (attackTypeSelectElement.value == "curse-of-pain") {
-        SPELL.curseOfPain.direct();
-        if (gameState.play) {
-          gameState.enemy.debuff.curseOfPain.timer?.play();
-        }
-      } else if (attackTypeSelectElement.value == "curse-of-sacrifice") {
-        SPELL.curseOfSacrifice.dot();
-        if (gameState.play) {
-          gameState.enemy.debuff.curseOfSacrifice.timer?.play();
-        }
-      } else if (attackTypeSelectElement.value == "dark-bolt") {
-        return SPELL.darkBolt.direct();
-      }
-    };
-
     resumeButton.onclick = () => {
       gameState.play = true;
       if (gameState.enemy.debuff.demonForm.active)
@@ -571,6 +556,24 @@ class Ui {
     resetButton.onclick = () => {
       gameState = new GameState();
       ui.update();
+    };
+
+    curseOfPainImage.onclick = () => {
+      SPELL.curseOfPain.direct();
+      if (gameState.play) {
+        gameState.enemy.debuff.curseOfPain.timer?.play();
+      }
+    };
+
+    curseOfSacrificeImage.onclick = () => {
+      SPELL.curseOfSacrifice.dot();
+      if (gameState.play) {
+        gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+      }
+    };
+
+    boltOfDarknessImage.onclick = () => {
+      SPELL.darkBolt.direct();
     };
 
     this.update();

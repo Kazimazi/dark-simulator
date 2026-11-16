@@ -59,7 +59,10 @@ export let currentHealthElement = document.getElementById("current-health");
 export let barMaxHealthElement = document.getElementById("bar-max-health");
 export let healthBarElement = document.getElementById("health-bar");
 
-export const attackButton = document.getElementById("attack") as HTMLButtonElement;
 export const resumeButton = document.getElementById("resume") as HTMLButtonElement;
 export const pauseButton = document.getElementById("pause") as HTMLButtonElement;
 export const resetButton = document.getElementById("reset") as HTMLButtonElement;
+
+export const curseOfPainImage = document.getElementById("curse-of-pain-button") as HTMLImageElement;
+export const curseOfSacrificeImage = document.getElementById("curse-of-sacrifice-button") as HTMLImageElement;
+export const boltOfDarknessImage = document.getElementById("bolt-of-darkness-button") as HTMLImageElement;
