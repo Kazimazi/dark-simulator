@@ -126,6 +126,7 @@ h2 {
 
 #spells > img {
   height: inherit;
+  cursor: pointer;
 }
 
 #control-buttons {

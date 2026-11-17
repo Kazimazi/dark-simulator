@@ -9,6 +9,8 @@ import {
   ONE_MAN_BAND_HEAL_COEFFICIENT,
   ONE_MAN_BAND_MAX_MAGICAL_HEALING,
   PERSEVERANCE_DAMAGE_REDUCTION,
+  MAT_PAUSE_TEXT,
+  MAT_PLAY_TEXT,
 } from "./constants.js";
 import {
   enemyPresetElement,
@@ -29,8 +31,7 @@ import {
   additionalMagicDamageInputElement,
   trueMagicDamageInputElement,
   infernalUseryInputElement,
-  resumeButton,
-  pauseButton,
+  playButton,
   resetButton,
   demonFormInputElement,
   curseOfWeaknessInputElement,
@@ -529,28 +530,30 @@ class Ui {
       gameState.attacker.infernalUsery = this.checked;
     });
 
-    resumeButton.onclick = () => {
-      gameState.play = true;
-      if (gameState.enemy.debuff.demonForm.active)
-        gameState.enemy.debuff.demonForm.interval.play();
-      if (gameState.enemy.buff.oneManBand.active)
-        gameState.enemy.buff.oneManBand.interval.play();
-      if (gameState.enemy.debuff.curseOfPain.active)
-        gameState.enemy.debuff.curseOfPain.timer?.play();
-      if (gameState.enemy.debuff.curseOfSacrifice.active)
-        gameState.enemy.debuff.curseOfSacrifice.timer?.play();
-    };
-
-    pauseButton.onclick = () => {
-      gameState.play = false;
-      if (gameState.enemy.debuff.demonForm.active)
-        gameState.enemy.debuff.demonForm.interval.pause();
-      if (gameState.enemy.buff.oneManBand.active)
-        gameState.enemy.buff.oneManBand.interval.pause();
-      if (gameState.enemy.debuff.curseOfPain.active)
-        gameState.enemy.debuff.curseOfPain.timer?.pause();
-      if (gameState.enemy.debuff.curseOfSacrifice.active)
-        gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
+    playButton.onclick = () => {
+      if (gameState.play === true) {
+        gameState.play = false;
+        playButton.innerText = MAT_PLAY_TEXT;
+        if (gameState.enemy.debuff.demonForm.active)
+          gameState.enemy.debuff.demonForm.interval.pause();
+        if (gameState.enemy.buff.oneManBand.active)
+          gameState.enemy.buff.oneManBand.interval.pause();
+        if (gameState.enemy.debuff.curseOfPain.active)
+          gameState.enemy.debuff.curseOfPain.timer?.pause();
+        if (gameState.enemy.debuff.curseOfSacrifice.active)
+          gameState.enemy.debuff.curseOfSacrifice.timer?.pause();
+      } else {
+        gameState.play = true;
+        playButton.innerText = MAT_PAUSE_TEXT;
+        if (gameState.enemy.debuff.demonForm.active)
+          gameState.enemy.debuff.demonForm.interval.play();
+        if (gameState.enemy.buff.oneManBand.active)
+          gameState.enemy.buff.oneManBand.interval.play();
+        if (gameState.enemy.debuff.curseOfPain.active)
+          gameState.enemy.debuff.curseOfPain.timer?.play();
+        if (gameState.enemy.debuff.curseOfSacrifice.active)
+          gameState.enemy.debuff.curseOfSacrifice.timer?.play();
+      }
     };
 
     resetButton.onclick = () => {
@@ -628,6 +631,7 @@ class Ui {
     trueMagicDamageInputElement.value =
       gameState.attacker.trueMagicDamage.toString();
     infernalUseryInputElement.checked = gameState.attacker.infernalUsery;
+    playButton.innerText = MAT_PLAY_TEXT;
   }
 }
 

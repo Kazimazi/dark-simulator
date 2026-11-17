@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Darksim</title>
 		<link href="style.css" rel="stylesheet">
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=info">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
 	</head>
 
 	<body>
@@ -100,9 +100,9 @@
 			<br>
 
 			<div id="spells">
-				<img id="curse-of-pain-button" src="../assets/96px-Spell_Curse_of_Pain.png" alt="Curse of Pain button">
-				<img id="curse-of-sacrifice-button" src="../assets/96px-Spell_Power_of_Sacrifice.png" alt="Curse of Sacrifice button">
-				<img id="bolt-of-darkness-button" src="../assets/96px-Spell_Bolt_of_Darkness.png" alt="Bolt of Darkness button">
+				<img id="curse-of-pain-button" src="../assets/96px-Spell_Curse_of_Pain.png" alt="Curse of Pain button" title="Curse of Pain">
+				<img id="curse-of-sacrifice-button" src="../assets/96px-Spell_Power_of_Sacrifice.png" alt="Curse of Sacrifice button" title="Curse of Sacrifice">
+				<img id="bolt-of-darkness-button" src="../assets/96px-Spell_Bolt_of_Darkness.png" alt="Bolt of Darkness button" title="Bolt of Darkness">
 			</div>
 
 			<br>
@@ -120,9 +120,13 @@
 			<br>
 
 			<div id="control-buttons">
-				<button id="resume">Resume</button>
-				<button id="pause">Pause</button>
-				<button id="reset">Reset</button>
+				<div class="mat-icon-container">
+					<span id="play" class="material-symbols-outlined mat-icon">
+					</span>
+					<span id="reset" class="material-symbols-outlined mat-icon">
+						restart_alt
+					</span>
+				</div>
 			</div>
 
 			<script type="module" src="./app.js"></script>

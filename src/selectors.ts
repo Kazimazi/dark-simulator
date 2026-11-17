@@ -2,7 +2,9 @@
 export let enemyPresetElement = document.getElementById(
   "enemy-preset",
 ) as HTMLSelectElement;
-export let healthInputElement = document.getElementById("health") as HTMLInputElement;
+export let healthInputElement = document.getElementById(
+  "health",
+) as HTMLInputElement;
 export let maxHealthInputElement = document.getElementById(
   "max-health",
 ) as HTMLInputElement;
@@ -59,10 +61,15 @@ export let currentHealthElement = document.getElementById("current-health");
 export let barMaxHealthElement = document.getElementById("bar-max-health");
 export let healthBarElement = document.getElementById("health-bar");
 
-export const resumeButton = document.getElementById("resume") as HTMLButtonElement;
-export const pauseButton = document.getElementById("pause") as HTMLButtonElement;
-export const resetButton = document.getElementById("reset") as HTMLButtonElement;
+export const playButton = document.getElementById("play") as HTMLSpanElement;
+export const resetButton = document.getElementById("reset") as HTMLSpanElement;
 
-export const curseOfPainImage = document.getElementById("curse-of-pain-button") as HTMLImageElement;
-export const curseOfSacrificeImage = document.getElementById("curse-of-sacrifice-button") as HTMLImageElement;
-export const boltOfDarknessImage = document.getElementById("bolt-of-darkness-button") as HTMLImageElement;
+export const curseOfPainImage = document.getElementById(
+  "curse-of-pain-button",
+) as HTMLImageElement;
+export const curseOfSacrificeImage = document.getElementById(
+  "curse-of-sacrifice-button",
+) as HTMLImageElement;
+export const boltOfDarknessImage = document.getElementById(
+  "bolt-of-darkness-button",
+) as HTMLImageElement;
