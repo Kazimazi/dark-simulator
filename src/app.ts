@@ -11,6 +11,7 @@ import {
   PERSEVERANCE_DAMAGE_REDUCTION,
   MAT_PAUSE_TEXT,
   MAT_PLAY_TEXT,
+  NEW_SCALING,
 } from "./constants.js";
 import {
   enemyPresetElement,
@@ -214,13 +215,13 @@ const SPELL = {
     return {
       magicDamage:
         ((opts.baseDamage + gameState.attacker.magicalBaseDamage) *
-          (1 + gameState.attacker.magicPowerBonus) +
-          gameState.attacker.additionalMagicDamage) *
+          (1 + gameState.attacker.magicPowerBonus * NEW_SCALING) +
+          gameState.attacker.additionalMagicDamage * NEW_SCALING) *
         (1 + (opts.hitLocationBonus ? opts.hitLocationBonus : 0)) *
         (1 - magicDamageReduction * (1 - gameState.attacker.magicPenetration)) *
         // TODO: Projectile damage reduction not not implemented!
         (1 - (opts.projectile ? 0 : 0)),
-      trueDamage: gameState.attacker.trueMagicDamage,
+      trueDamage: gameState.attacker.trueMagicDamage * NEW_SCALING,
     };
   },
   /**
