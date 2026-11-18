@@ -9,7 +9,7 @@
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "build": "tsc && cp ./src/index.html ./dist/ && cp ./src/style.css ./dist/ && cp -r ./assets ./dist/",
+    "build": "tsc && cp ./src/index.html ./dist/ && cp ./src/style.css ./dist/ && cp -r ./src/assets ./dist/",
     "test": "jest",
     "watch": "tsc --watch"
   },
