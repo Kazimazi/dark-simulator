@@ -215,7 +215,7 @@ const SPELL = {
     return {
       magicDamage:
         ((opts.baseDamage + gameState.attacker.magicalBaseDamage) *
-          (1 + gameState.attacker.magicPowerBonus * NEW_SCALING) +
+          (1 + gameState.attacker.magicPowerBonus) +
           gameState.attacker.additionalMagicDamage * NEW_SCALING) *
         (1 + (opts.hitLocationBonus ? opts.hitLocationBonus : 0)) *
         (1 - magicDamageReduction * (1 - gameState.attacker.magicPenetration)) *
